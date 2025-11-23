@@ -12,7 +12,6 @@ export const metadata: Metadata = {
   title: "Spotify Listener Stats - Tes stats Spotify réinventées",
   description:
     "Découvre tes habitudes d'écoute, partage tes tendances, et accède en avant‑première aux insights exclusifs. Rejoins la bêta privée.",
-  generator: "v0.app",
   icons: {
     icon: [
       {
