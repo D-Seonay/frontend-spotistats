@@ -132,7 +132,7 @@ export default function DashboardPage() {
         </div>
 
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
-          <button
+          {/* <button
             onClick={() => setActiveTab("overview")}
             className={`whitespace-nowrap px-4 py-2 transition-colors ${
               activeTab === "overview" ? "border-b-2 border-[#1DB954] text-[#1DB954]" : "text-gray-400 hover:text-white"
@@ -155,7 +155,7 @@ export default function DashboardPage() {
             }`}
           >
             Top Artistes
-          </button>
+          </button> */}
           <button
             onClick={() => setActiveTab("import")}
             className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 transition-colors ${
