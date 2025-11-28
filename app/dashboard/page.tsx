@@ -131,7 +131,7 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
+        {/* <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
           <button
             onClick={() => setActiveTab("overview")}
             className={`whitespace-nowrap px-4 py-2 transition-colors ${
@@ -165,7 +165,7 @@ export default function DashboardPage() {
             <Upload className="h-4 w-4" />
             Importer CSV
           </button>
-        </div>
+        </div> */}
 
         {/* Content based on active tab */}
         {activeTab === "import" ? (
