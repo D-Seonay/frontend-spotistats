@@ -28,9 +28,9 @@ export default function Header({ onLogin }: Props) {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954]">
-            <span className="font-mono text-lg font-bold text-black">SLS</span>
+            <span className="font-mono text-lg font-bold text-black">SS</span>
           </div>
-          <span className="hidden font-bold sm:inline">Spotify Listener Stats</span>
+          <span className="hidden font-bold sm:inline">SpotiStats</span>
         </Link>
 
         {/* Desktop Navigation */}
