@@ -1,25 +1,98 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Mail, Calendar, Music, Settings, ArrowLeft, Save } from "lucide-react"
+import { User, Mail, Calendar, Music, Settings, ArrowLeft, Save, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
+
+interface SpotifyProfile {
+  display_name: string
+  email: string
+  country: string
+  product: string
+  followers: {
+    total: number
+  }
+}
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
-  const [profile, setProfile] = useState({
-    name: "Utilisateur Spotify",
-    email: "user@example.com",
-    memberSince: "Janvier 2024",
-    spotifyPlan: "Premium",
-    privacy: "public",
-  })
+  const [profile, setProfile] = useState<SpotifyProfile | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem("spotify_access_token")
+
+      if (!token) {
+        setError("Token d'accès Spotify non trouvé. Veuillez en fournir un.")
+        setLoading(false)
+        return
+      }
+
+      try {
+        const response = await fetch("https://api.spotify.com/v1/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            setError("Token d'accès expiré ou invalide. Veuillez en fournir un nouveau.")
+            localStorage.removeItem("spotify_access_token")
+          } else {
+            throw new Error(`Error: ${response.status} ${response.statusText}`)
+          }
+        }
+
+        const data: SpotifyProfile = await response.json()
+        setProfile(data)
+      } catch (err: any) {
+        setError(err.message)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProfile()
+  }, [])
 
   const handleSave = () => {
     setIsEditing(false)
     // Here you would save to backend
     console.log("[v0] Saving profile:", profile)
+  }
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (profile) {
+      setProfile({ ...profile, display_name: e.target.value })
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-black text-white">
+        <Loader2 className="h-12 w-12 animate-spin text-[#1DB954]" />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white">
+        <AlertCircle className="h-12 w-12 text-red-500" />
+        <h2 className="mt-4 text-xl font-semibold">Erreur de chargement du profil</h2>
+        <p className="mt-2 text-gray-400">{error}</p>
+        <Link href="/token" className="mt-6">
+          <Button className="rounded-full bg-[#1DB954] text-black font-semibold hover:bg-[#1ed760]">
+            Aller à la page du token
+          </Button>
+        </Link>
+      </div>
+    )
   }
 
   return (
@@ -87,12 +160,12 @@ export default function ProfilePage() {
                   {isEditing ? (
                     <input
                       type="text"
-                      value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                      value={profile?.display_name || ""}
+                      onChange={handleNameChange}
                       className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#1DB954] focus:outline-none"
                     />
                   ) : (
-                    <p className="text-lg font-medium">{profile.name}</p>
+                    <p className="text-lg font-medium">{profile?.display_name}</p>
                   )}
                 </div>
 
@@ -101,24 +174,15 @@ export default function ProfilePage() {
                     <Mail className="h-4 w-4" />
                     Email
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                      className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white focus:border-[#1DB954] focus:outline-none"
-                    />
-                  ) : (
-                    <p className="text-lg font-medium">{profile.email}</p>
-                  )}
+                  <p className="text-lg font-medium">{profile?.email}</p>
                 </div>
 
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm text-gray-400">
                     <Calendar className="h-4 w-4" />
-                    Membre depuis
+                    Pays
                   </label>
-                  <p className="text-lg font-medium">{profile.memberSince}</p>
+                  <p className="text-lg font-medium">{profile?.country}</p>
                 </div>
 
                 <div className="space-y-2">
@@ -126,7 +190,7 @@ export default function ProfilePage() {
                     <Music className="h-4 w-4" />
                     Plan Spotify
                   </label>
-                  <p className="text-lg font-medium">{profile.spotifyPlan}</p>
+                  <p className="text-lg font-medium capitalize">{profile?.product}</p>
                 </div>
               </CardContent>
             </Card>
@@ -144,8 +208,6 @@ export default function ProfilePage() {
                 <div>
                   <label className="mb-2 block text-sm text-gray-400">Confidentialité du profil</label>
                   <select
-                    value={profile.privacy}
-                    onChange={(e) => setProfile({ ...profile, privacy: e.target.value })}
                     disabled={!isEditing}
                     className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-white disabled:opacity-50 focus:border-[#1DB954] focus:outline-none"
                   >
