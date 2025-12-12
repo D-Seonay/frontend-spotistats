@@ -20,6 +20,14 @@ interface SpotifyPlayerProps {
   onReady?: (deviceId: string) => void
 }
 
+// Declare Spotify global object
+declare global {
+  interface Window {
+    Spotify: any;
+    onSpotifyWebPlaybackSDKReady: () => void;
+  }
+}
+
 export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
   const [player, setPlayer] = useState<any>(null)
   const [deviceId, setDeviceId] = useState<string>("")
