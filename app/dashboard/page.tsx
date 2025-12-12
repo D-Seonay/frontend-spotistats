@@ -7,10 +7,12 @@ import { Music, TrendingUp, Clock, Heart, LogOut, User, Upload } from "lucide-re
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { CsvImporter } from "@/components/CsvImporter"
+import SpotifyPlayer from "@/components/SpotifyPlayer"
 
 export default function DashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"overview" | "tracks" | "artists" | "import">("overview")
+  const [deviceId, setDeviceId] = useState<string | null>(null)
 
   const handleLogout = () => {
     router.push("/")
@@ -129,6 +131,11 @@ export default function DashboardPage() {
               <p className="text-3xl font-bold text-[#1DB954]">{stats.totalArtists}</p>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Spotify Player */}
+        <div className="mb-8">
+          <SpotifyPlayer onReady={setDeviceId} />
         </div>
 
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
