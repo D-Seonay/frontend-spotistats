@@ -23,8 +23,8 @@ interface SpotifyPlayerProps {
 // Declare Spotify global object
 declare global {
   interface Window {
-    Spotify: any;
-    onSpotifyWebPlaybackSDKReady: () => void;
+    Spotify: any
+    onSpotifyWebPlaybackSDKReady: () => void
   }
 }
 
@@ -40,38 +40,46 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
   const [isMuted, setIsMuted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const accessTokenRef = useRef<string>("")
+  const progressIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Load Spotify Web Playback SDK
     const script = document.createElement("script")
     script.src = "https://sdk.scdn.co/spotify-player.js"
     script.async = true
     document.body.appendChild(script)
 
-    // Initialize player when SDK is loaded
-    window.onSpotifyWebPlaybackSDKReady = () => {
-      initializePlayer()
-    }
+    window.onSpotifyWebPlaybackSDKReady = initializePlayer
 
     return () => {
       if (player) {
         player.disconnect()
       }
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current)
+      }
     }
   }, [])
 
+  useEffect(() => {
+    if (progressIntervalRef.current) {
+      clearInterval(progressIntervalRef.current)
+    }
+    if (isActive && !isPaused) {
+      progressIntervalRef.current = setInterval(() => {
+        setPosition((pos) => pos + 1000)
+      }, 1000)
+    }
+  }, [isActive, isPaused])
+
   const initializePlayer = async () => {
     try {
-      // Get access token from backend
       const tokenResponse = await fetch("/api/auth/token")
       if (!tokenResponse.ok) {
         throw new Error("Failed to get access token")
       }
-
       const { access_token } = await tokenResponse.json()
       accessTokenRef.current = access_token
 
-      // Create Spotify Player instance
       const spotifyPlayer = new window.Spotify.Player({
         name: "Spotify Listener Stats Player",
         getOAuthToken: (cb: (token: string) => void) => {
@@ -80,35 +88,29 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
         volume: 0.5,
       })
 
-      // Error handling
       spotifyPlayer.addListener("initialization_error", ({ message }: any) => {
         console.error("[v0] Initialization error:", message)
         setError("Erreur d'initialisation du lecteur")
       })
-
       spotifyPlayer.addListener("authentication_error", ({ message }: any) => {
         console.error("[v0] Authentication error:", message)
         setError("Erreur d'authentification")
         refreshToken()
       })
-
       spotifyPlayer.addListener("account_error", ({ message }: any) => {
         console.error("[v0] Account error:", message)
         setError("Erreur de compte - Spotify Premium requis")
       })
-
       spotifyPlayer.addListener("playback_error", ({ message }: any) => {
         console.error("[v0] Playback error:", message)
         setError("Erreur de lecture")
       })
 
-      // Player state updates
       spotifyPlayer.addListener("player_state_changed", (state: any) => {
         if (!state) {
           setIsActive(false)
           return
         }
-
         setCurrentTrack(state.track_window.current_track)
         setIsPaused(state.paused)
         setPosition(state.position)
@@ -116,7 +118,6 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
         setIsActive(true)
       })
 
-      // Ready
       spotifyPlayer.addListener("ready", ({ device_id }: any) => {
         console.log("[v0] Player ready with Device ID:", device_id)
         setDeviceId(device_id)
@@ -126,12 +127,10 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
         }
       })
 
-      // Not Ready
       spotifyPlayer.addListener("not_ready", ({ device_id }: any) => {
         console.log("[v0] Device ID has gone offline:", device_id)
       })
 
-      // Connect to the player
       const connected = await spotifyPlayer.connect()
       if (connected) {
         console.log("[v0] Successfully connected to Spotify")
@@ -156,44 +155,32 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
     }
   }
 
-  const togglePlay = () => {
-    if (player) {
-      player.togglePlay()
-    }
-  }
-
-  const skipToNext = () => {
-    if (player) {
-      player.nextTrack()
-    }
-  }
-
-  const skipToPrevious = () => {
-    if (player) {
-      player.previousTrack()
-    }
-  }
+  const togglePlay = () => player?.togglePlay()
+  const skipToNext = () => player?.nextTrack()
+  const skipToPrevious = () => player?.previousTrack()
 
   const handleVolumeChange = (value: number[]) => {
     const newVolume = value[0]
     setVolume(newVolume)
-    if (player) {
-      player.setVolume(newVolume / 100)
-    }
-    if (newVolume > 0) {
+    player?.setVolume(newVolume / 100)
+    if (newVolume > 0 && isMuted) {
       setIsMuted(false)
     }
   }
+  
+  const handleSeek = (value: number[]) => {
+    const newPosition = value[0]
+    setPosition(newPosition)
+    player?.seek(newPosition)
+  }
 
   const toggleMute = () => {
-    if (player) {
-      if (isMuted) {
-        player.setVolume(volume / 100)
-        setIsMuted(false)
-      } else {
-        player.setVolume(0)
-        setIsMuted(true)
-      }
+    if (isMuted) {
+      player?.setVolume(volume / 100)
+      setIsMuted(false)
+    } else {
+      player?.setVolume(0)
+      setIsMuted(true)
     }
   }
 
@@ -235,7 +222,6 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
     <Card className="border-white/10 bg-gradient-to-br from-[#1DB954]/10 to-black">
       <CardContent className="p-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
-          {/* Album Art & Track Info */}
           <div className="flex items-center gap-4">
             {currentTrack.album.images[0] && (
               <img
@@ -250,13 +236,11 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
             </div>
           </div>
 
-          {/* Controls */}
           <div className="flex flex-1 flex-col gap-2">
             <div className="flex items-center justify-center gap-4">
               <Button size="icon" variant="ghost" onClick={skipToPrevious} className="hover:text-[#1DB954]">
                 <SkipBack className="h-5 w-5" />
               </Button>
-
               <Button
                 size="icon"
                 onClick={togglePlay}
@@ -264,26 +248,23 @@ export default function SpotifyPlayer({ onReady }: SpotifyPlayerProps) {
               >
                 {isPaused ? <Play className="h-6 w-6" /> : <Pause className="h-6 w-6" />}
               </Button>
-
               <Button size="icon" variant="ghost" onClick={skipToNext} className="hover:text-[#1DB954]">
                 <SkipForward className="h-5 w-5" />
               </Button>
             </div>
-
-            {/* Progress Bar */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-400">{formatTime(position)}</span>
-              <div className="h-1 flex-1 rounded-full bg-white/20">
-                <div
-                  className="h-full rounded-full bg-[#1DB954]"
-                  style={{ width: `${(position / duration) * 100}%` }}
-                />
-              </div>
+              <Slider
+                value={[position]}
+                onValueChange={handleSeek}
+                max={duration}
+                step={1000}
+                className="flex-1"
+              />
               <span className="text-xs text-gray-400">{formatTime(duration)}</span>
             </div>
           </div>
 
-          {/* Volume Control */}
           <div className="flex items-center gap-2">
             <Button size="icon" variant="ghost" onClick={toggleMute} className="hover:text-[#1DB954]">
               {isMuted ? <VolumeX className="h-5 w-5" /> : <Volume2 className="h-5 w-5" />}
