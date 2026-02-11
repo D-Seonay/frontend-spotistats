@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Music, TrendingUp, Clock, Heart, LogOut, User, Upload } from "lucide-react"
@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [topArtists, setTopArtists] = useState<any[]>([])
   const [loadingTopData, setLoadingTopData] = useState(true)
   const [errorTopData, setErrorTopData] = useState<string | null>(null)
+  const [deviceId, setDeviceId] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchTopData() {
