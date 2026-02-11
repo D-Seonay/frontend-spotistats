@@ -10,6 +10,43 @@ import { Input } from "@/components/ui/input"
 import { useData } from "@/lib/DataContext"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useSpotifyArtistImage } from "@/lib/hooks/useSpotifyArtistImage"
+
+// Define SpotifyStreamingData and Filters interfaces from DataContext
+import { SpotifyStreamingData, ParsedStats, Filters } from "@/lib/DataContext"
+
+function ArtistCard({ artist, index, currentPage, itemsPerPage }: {
+  artist: { name: string; plays: number };
+  index: number;
+  currentPage: number;
+  itemsPerPage: number;
+}) {
+  const imageUrl = useSpotifyArtistImage(artist.name)
+
+  return (
+    <Card key={index} className="border-white/10 bg-white/5 backdrop-blur-sm">
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
+          {(currentPage - 1) * itemsPerPage + index + 1}
+        </span>
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={`${artist.name} image`} className="h-12 w-12 rounded-full object-cover" />
+        ) : (
+          <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
+            <TrendingUp className="h-6 w-6" />
+          </div>
+        )}
+        <div className="flex-1">
+          <CardTitle className="text-lg font-medium">{artist.name}</CardTitle>
+          <CardDescription className="text-gray-400">
+            {artist.plays} écoutes
+          </CardDescription>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
 
 export default function AllArtistsPage() {
   const { allRawData, importedStats, setImportedData } = useData()
@@ -282,23 +319,13 @@ export default function AllArtistsPage() {
 
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {paginatedArtists.map((artist, index) => (
-                <Card key={index} className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </span>
-                    {/* Placeholder for artist image as it's not directly available from CsvImporter stats */}
-                    <div className="h-12 w-12 rounded-full bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
-                      <TrendingUp className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-medium">{artist.name}</CardTitle>
-                      <CardDescription className="text-gray-400">
-                        {artist.plays} écoutes
-                      </CardDescription>
-                    </div>
-                  </CardHeader>
-                </Card>
+                <ArtistCard
+                  key={artist.name} // Use a more stable key
+                  artist={artist}
+                  index={index}
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                />
               ))}
             </div>
 
@@ -335,3 +362,4 @@ export default function AllArtistsPage() {
     </PageLayout>
   )
 }
+

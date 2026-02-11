@@ -10,6 +10,44 @@ import { Input } from "@/components/ui/input"
 import { useData } from "@/lib/DataContext"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useSpotifyTrackImage } from "@/lib/hooks/useSpotifyTrackImage"
+
+// Define SpotifyStreamingData and Filters interfaces from DataContext
+import { SpotifyStreamingData, ParsedStats, Filters } from "@/lib/DataContext"
+
+function TrackCard({ track, index, currentPage, itemsPerPage }: {
+  track: { name: string; artist: string; plays: number };
+  index: number;
+  currentPage: number;
+  itemsPerPage: number;
+}) {
+  const imageUrl = useSpotifyTrackImage(track.name, track.artist)
+
+  return (
+    <Card key={index} className="border-white/10 bg-white/5 backdrop-blur-sm">
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
+        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
+          {(currentPage - 1) * itemsPerPage + index + 1}
+        </span>
+        {imageUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imageUrl} alt={`${track.name} album cover`} className="h-12 w-12 rounded-md object-cover" />
+        ) : (
+          <div className="h-12 w-12 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
+            <Music className="h-6 w-6" />
+          </div>
+        )}
+        <div className="flex-1">
+          <CardTitle className="text-lg font-medium">{track.name}</CardTitle>
+          <CardDescription className="text-gray-400">
+            {track.artist}
+          </CardDescription>
+          <p className="text-sm text-gray-400">{track.plays} écoutes</p>
+        </div>
+      </CardHeader>
+    </Card>
+  )
+}
 
 export default function AllMusicPage() {
   const { allRawData, importedStats, setImportedData } = useData()
@@ -285,24 +323,13 @@ export default function AllMusicPage() {
 
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {paginatedTracks.map((track, index) => (
-                <Card key={index} className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
-                      {(currentPage - 1) * itemsPerPage + index + 1}
-                    </span>
-                    {/* Placeholder for album image as it's not directly available in SpotifyStreamingData */}
-                    <div className="h-12 w-12 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
-                      <Music className="h-6 w-6" />
-                    </div>
-                    <div className="flex-1">
-                      <CardTitle className="text-lg font-medium">{track.name}</CardTitle>
-                      <CardDescription className="text-gray-400">
-                        {track.artist}
-                      </CardDescription>
-                      <p className="text-sm text-gray-400">{track.plays} écoutes</p>
-                    </div>
-                  </CardHeader>
-                </Card>
+                <TrackCard
+                  key={track.name + track.artist} // Use a more stable key
+                  track={track}
+                  index={index}
+                  currentPage={currentPage}
+                  itemsPerPage={itemsPerPage}
+                />
               ))}
             </div>
 
