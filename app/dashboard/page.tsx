@@ -9,55 +9,40 @@ import { useRouter } from "next/navigation"
 import { CsvImporter } from "@/components/CsvImporter"
 import SpotifyPlayer from "@/components/SpotifyPlayer"
 
+// Define ParsedStats interface as per CsvImporter.tsx
+interface ParsedStats {
+  totalStreams: number
+  totalMinutes: number
+  uniqueTracks: number
+  uniqueArtists: number
+  topTracks: { name: string; artist: string; plays: number; minutes: number }[]
+  topArtists: { name: string; plays: number; minutes: number }[]
+  monthlyData: { month: string; minutes: number; streams: number }[]
+  hourlyData: { hour: string; streams: number }[]
+  weekdayData: { day: string; streams: number }[]
+  dailyData: { date: string; minutes: number; streams: number }[]
+}
+
 export default function DashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
-  const [topTracks, setTopTracks] = useState<any[]>([])
-  const [topArtists, setTopArtists] = useState<any[]>([])
-  const [loadingTopData, setLoadingTopData] = useState(true)
-  const [errorTopData, setErrorTopData] = useState<string | null>(null)
   const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [importedStats, setImportedStats] = useState<ParsedStats | null>(null)
 
-  useEffect(() => {
-    async function fetchTopData() {
-      try {
-        const [tracksResponse, artistsResponse] = await Promise.all([
-          fetch("/api/spotify/tracks"),
-          fetch("/api/spotify/artists"),
-        ])
-
-        if (!tracksResponse.ok) {
-          throw new Error(`Error fetching top tracks: ${tracksResponse.statusText}`)
-        }
-        if (!artistsResponse.ok) {
-          throw new Error(`Error fetching top artists: ${artistsResponse.statusText}`)
-        }
-
-        const tracksData = await tracksResponse.json()
-        const artistsData = await artistsResponse.json()
-
-        setTopTracks(tracksData.slice(0, 5)) // Get only top 5 for dashboard
-        setTopArtists(artistsData.slice(0, 5)) // Get only top 5 for dashboard
-      } catch (err: any) {
-        console.error("[v0] Error fetching top data:", err)
-        setErrorTopData(err.message)
-      } finally {
-        setLoadingTopData(false)
-      }
-    }
-    fetchTopData()
-  }, [])
+  const handleDataImported = (data: ParsedStats) => {
+    setImportedStats(data)
+    setActiveTab("overview") // Switch to overview after import
+  }
 
   const handleLogout = () => {
     router.push("/")
   }
 
-  // Mock data - in real app, this would come from Spotify API
   const stats = {
-    totalListeningTime: "1,234",
-    topGenre: "Pop",
-    totalTracks: "856",
-    totalArtists: "342",
+    totalListeningTime: importedStats ? Math.round(importedStats.totalMinutes / 60).toLocaleString() : "0",
+    topGenre: "N/A", // Genre not directly available in current ParsedStats
+    totalTracks: importedStats ? importedStats.uniqueTracks.toLocaleString() : "0",
+    totalArtists: importedStats ? importedStats.uniqueArtists.toLocaleString() : "0",
   }
 
 
@@ -184,15 +169,13 @@ export default function DashboardPage() {
 
         {/* Content based on active tab */}
         {activeTab === "import" ? (
-          <CsvImporter />
+          <CsvImporter onDataImported={handleDataImported} />
         ) : (
           <div className="grid gap-6 lg:grid-cols-2">
             {activeTab === "overview" && (
               <>
-                {loadingTopData ? (
-                  <p>Chargement des données principales...</p>
-                ) : errorTopData ? (
-                  <p className="text-red-500">Erreur: {errorTopData}</p>
+                {!importedStats ? (
+                  <p>Importez vos données Spotify (fichiers CSV/JSON) pour voir vos statistiques.</p>
                 ) : (
                   <>
                     <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
@@ -205,9 +188,9 @@ export default function DashboardPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {topTracks.length > 0 ? (
-                            topTracks.map((track, index) => (
-                              <div key={track.id || index} className="flex items-center justify-between">
+                          {importedStats.topTracks.length > 0 ? (
+                            importedStats.topTracks.slice(0, 5).map((track, index) => (
+                              <div key={track.name + track.artist + index} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
                                     {index + 1}
@@ -215,14 +198,13 @@ export default function DashboardPage() {
                                   <div>
                                     <p className="font-medium">{track.name}</p>
                                     <p className="text-sm text-gray-400">
-                                      {track.artists.map((artist: any) => artist.name).join(", ")}
+                                      {track.artist}
                                     </p>
                                   </div>
                                 </div>
                                 <span className="text-sm text-gray-400">
-                                  {track.popularity} popularité (exemple)
+                                  {track.plays} écoutes
                                 </span>{" "}
-                                {/* Replace with actual plays count */}
                               </div>
                             ))
                           ) : (
@@ -242,9 +224,9 @@ export default function DashboardPage() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {topArtists.length > 0 ? (
-                            topArtists.map((artist, index) => (
-                              <div key={artist.id || index} className="flex items-center justify-between">
+                          {importedStats.topArtists.length > 0 ? (
+                            importedStats.topArtists.slice(0, 5).map((artist, index) => (
+                              <div key={artist.name + index} className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                   <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
                                     {index + 1}
@@ -252,9 +234,8 @@ export default function DashboardPage() {
                                   <p className="font-medium">{artist.name}</p>
                                 </div>
                                 <span className="text-sm text-gray-400">
-                                  {artist.popularity} popularité (exemple)
+                                  {artist.plays} écoutes
                                 </span>{" "}
-                                {/* Replace with actual plays count */}
                               </div>
                             ))
                           ) : (
@@ -267,8 +248,6 @@ export default function DashboardPage() {
                 )}
               </>
             )}
-
-
           </div>
         )}
       </main>
