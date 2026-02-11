@@ -92,14 +92,17 @@ export default function AllMusicPage() {
 
   const allUniqueTracks = useMemo(() => {
     if (!importedStats || filteredData.length === 0) return []
-    const uniqueTracksMap = new Map<string, { name: string; artist: string }>()
+    const uniqueTracksPlayCountMap = new Map<string, { name: string; artist: string; plays: number }>()
     filteredData.forEach(item => {
       const key = `${item.trackName}-${item.artistName}`
-      if (!uniqueTracksMap.has(key)) {
-        uniqueTracksMap.set(key, { name: item.trackName, artist: item.artistName })
+      const existing = uniqueTracksPlayCountMap.get(key)
+      if (existing) {
+        existing.plays++
+      } else {
+        uniqueTracksPlayCountMap.set(key, { name: item.trackName, artist: item.artistName, plays: 1 })
       }
     })
-    return Array.from(uniqueTracksMap.values()).sort((a, b) => a.name.localeCompare(b.name))
+    return Array.from(uniqueTracksPlayCountMap.values()).sort((a, b) => b.plays - a.plays) // Sort by plays descending
   }, [importedStats, filteredData])
 
   const filteredTracks = useMemo(() => {
@@ -261,6 +264,7 @@ export default function AllMusicPage() {
                       <CardDescription className="text-gray-400">
                         {track.artist}
                       </CardDescription>
+                      <p className="text-sm text-gray-400">{track.plays} écoutes</p>
                     </div>
                   </CardHeader>
                 </Card>

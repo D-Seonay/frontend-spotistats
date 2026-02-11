@@ -91,14 +91,16 @@ export default function AllArtistsPage() {
 
   const allUniqueArtists = useMemo(() => {
     if (!importedStats || filteredData.length === 0) return []
-    // Get unique artists from filteredData, not just topArtists
-    const uniqueArtistsMap = new Map<string, { name: string }>();
+    const uniqueArtistsPlayCountMap = new Map<string, { name: string; plays: number }>()
     filteredData.forEach(item => {
-        if (!uniqueArtistsMap.has(item.artistName)) {
-            uniqueArtistsMap.set(item.artistName, { name: item.artistName });
-        }
-    });
-    return Array.from(uniqueArtistsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+      const existing = uniqueArtistsPlayCountMap.get(item.artistName)
+      if (existing) {
+        existing.plays++
+      } else {
+        uniqueArtistsPlayCountMap.set(item.artistName, { name: item.artistName, plays: 1 })
+      }
+    })
+    return Array.from(uniqueArtistsPlayCountMap.values()).sort((a, b) => b.plays - a.plays) // Sort by plays descending
   }, [importedStats, filteredData])
 
   const filteredArtists = useMemo(() => {
@@ -257,8 +259,7 @@ export default function AllArtistsPage() {
                     <div className="flex-1">
                       <CardTitle className="text-lg font-medium">{artist.name}</CardTitle>
                       <CardDescription className="text-gray-400">
-                        {/* Genre not available in current ParsedStats */}
-                        Genre inconnu
+                        {artist.plays} écoutes
                       </CardDescription>
                     </div>
                   </CardHeader>
