@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Music, TrendingUp, Clock, Heart, LogOut, User, Upload } from "lucide-react"
@@ -179,12 +179,13 @@ function ActivityHeatmap({ data }: { data: { date: string; minutes: number; stre
 // Chart colors
 const CHART_COLORS = ["#1DB954", "#1ed760", "#169c46", "#0d7a35", "#095c28"]
 
+import { useData } from "@/lib/DataContext"
+
 export default function DashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const [importedStats, setImportedStats] = useState<ParsedStats | null>(null)
-  const [allRawData, setAllRawData] = useState<SpotifyStreamingData[]>([])
+  const { allRawData, importedStats, setImportedData } = useData()
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Filters>({
     artistSearch: "",
@@ -196,8 +197,7 @@ export default function DashboardPage() {
   const [activeChart, setActiveChart] = useState<"area" | "bar" | "pie">("area")
 
   const handleDataImported = (stats: ParsedStats, rawData: SpotifyStreamingData[]) => {
-    setImportedStats(stats)
-    setAllRawData(rawData)
+    setImportedData(stats, rawData)
     setActiveTab("overview") // Switch to overview after import
   }
 

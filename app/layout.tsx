@@ -32,6 +32,8 @@ export const metadata: Metadata = {
     generator: 'v0.app'
 }
 
+import { DataProvider } from "@/lib/DataContext"
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -40,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`font-sans antialiased`}>
-        {children}
+        <DataProvider>{children}</DataProvider>
         <Analytics />
       </body>
     </html>

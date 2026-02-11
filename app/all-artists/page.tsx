@@ -1,11 +1,14 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { TrendingUp, Filter, ChevronDown, ChevronUp, Calendar, User, Music, Clock } from "lucide-react"
 import PageLayout from "@/components/PageLayout"
 import { CsvImporter, analyzeData } from "@/components/CsvImporter"
 import { Input } from "@/components/ui/input"
+
+import { useData } from "@/lib/DataContext"
+import { Button } from "@/components/ui/button"
 
 interface SpotifyStreamingData {
   endTime: string
@@ -13,31 +16,8 @@ interface SpotifyStreamingData {
   trackName: string
   msPlayed: number
 }
-
-interface ParsedStats {
-  totalStreams: number
-  totalMinutes: number
-  uniqueTracks: number
-  uniqueArtists: number
-  topTracks: { name: string; artist: string; plays: number; minutes: number }[]
-  topArtists: { name: string; plays: number; minutes: number }[]
-  monthlyData: { month: string; minutes: number; streams: number }[]
-  hourlyData: { hour: string; streams: number }[]
-  weekdayData: { day: string; streams: number }[]
-  dailyData: { date: string; minutes: number; streams: number }[]
-}
-
-interface Filters {
-  artistSearch: string
-  trackSearch: string
-  dateFrom: string
-  dateTo: string
-  minPlaytime: number
-}
-
 export default function AllArtistsPage() {
-  const [allRawData, setAllRawData] = useState<SpotifyStreamingData[]>([])
-  const [importedStats, setImportedStats] = useState<ParsedStats | null>(null)
+  const { allRawData, importedStats, setImportedData } = useData()
   const [searchTerm, setSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
   const [filters, setFilters] = useState<Filters>({
@@ -49,8 +29,7 @@ export default function AllArtistsPage() {
   })
 
   const handleDataImported = (data: ParsedStats, rawData: SpotifyStreamingData[]) => {
-    setImportedStats(data)
-    setAllRawData(rawData)
+    setImportedData(data, rawData)
   }
 
   const resetFilters = () => {
