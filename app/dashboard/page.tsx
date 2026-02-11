@@ -11,8 +11,41 @@ import SpotifyPlayer from "@/components/SpotifyPlayer"
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<"overview" | "tracks" | "artists" | "import">("overview")
-  const [deviceId, setDeviceId] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
+  const [topTracks, setTopTracks] = useState<any[]>([])
+  const [topArtists, setTopArtists] = useState<any[]>([])
+  const [loadingTopData, setLoadingTopData] = useState(true)
+  const [errorTopData, setErrorTopData] = useState<string | null>(null)
+
+  useEffect(() => {
+    async function fetchTopData() {
+      try {
+        const [tracksResponse, artistsResponse] = await Promise.all([
+          fetch("/api/spotify/tracks"),
+          fetch("/api/spotify/artists"),
+        ])
+
+        if (!tracksResponse.ok) {
+          throw new Error(`Error fetching top tracks: ${tracksResponse.statusText}`)
+        }
+        if (!artistsResponse.ok) {
+          throw new Error(`Error fetching top artists: ${artistsResponse.statusText}`)
+        }
+
+        const tracksData = await tracksResponse.json()
+        const artistsData = await artistsResponse.json()
+
+        setTopTracks(tracksData.slice(0, 5)) // Get only top 5 for dashboard
+        setTopArtists(artistsData.slice(0, 5)) // Get only top 5 for dashboard
+      } catch (err: any) {
+        console.error("[v0] Error fetching top data:", err)
+        setErrorTopData(err.message)
+      } finally {
+        setLoadingTopData(false)
+      }
+    }
+    fetchTopData()
+  }, [])
 
   const handleLogout = () => {
     router.push("/")
@@ -26,21 +59,7 @@ export default function DashboardPage() {
     totalArtists: "342",
   }
 
-  const topTracks = [
-    { name: "Blinding Lights", artist: "The Weeknd", plays: 127 },
-    { name: "Watermelon Sugar", artist: "Harry Styles", plays: 98 },
-    { name: "Levitating", artist: "Dua Lipa", plays: 87 },
-    { name: "Save Your Tears", artist: "The Weeknd", plays: 76 },
-    { name: "Good 4 U", artist: "Olivia Rodrigo", plays: 65 },
-  ]
 
-  const topArtists = [
-    { name: "The Weeknd", plays: 543 },
-    { name: "Dua Lipa", plays: 432 },
-    { name: "Harry Styles", plays: 389 },
-    { name: "Taylor Swift", plays: 356 },
-    { name: "Ed Sheeran", plays: 298 },
-  ]
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -139,30 +158,18 @@ export default function DashboardPage() {
         </div>
 
         <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
-          {/* <button
-            onClick={() => setActiveTab("overview")}
-            className={`whitespace-nowrap px-4 py-2 transition-colors ${
-              activeTab === "overview" ? "border-b-2 border-[#1DB954] text-[#1DB954]" : "text-gray-400 hover:text-white"
-            }`}
+          <Link
+            href="/all-music"
+            className="whitespace-nowrap px-4 py-2 transition-colors text-gray-400 hover:text-white"
           >
-            Vue d'ensemble
-          </button>
-          <button
-            onClick={() => setActiveTab("tracks")}
-            className={`whitespace-nowrap px-4 py-2 transition-colors ${
-              activeTab === "tracks" ? "border-b-2 border-[#1DB954] text-[#1DB954]" : "text-gray-400 hover:text-white"
-            }`}
+            Tous les Titres
+          </Link>
+          <Link
+            href="/all-artists"
+            className="whitespace-nowrap px-4 py-2 transition-colors text-gray-400 hover:text-white"
           >
-            Top Titres
-          </button>
-          <button
-            onClick={() => setActiveTab("artists")}
-            className={`whitespace-nowrap px-4 py-2 transition-colors ${
-              activeTab === "artists" ? "border-b-2 border-[#1DB954] text-[#1DB954]" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            Top Artistes
-          </button> */}
+            Tous les Artistes
+          </Link>
           <button
             onClick={() => setActiveTab("import")}
             className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 transition-colors ${
@@ -181,123 +188,86 @@ export default function DashboardPage() {
           <div className="grid gap-6 lg:grid-cols-2">
             {activeTab === "overview" && (
               <>
-                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Music className="h-5 w-5 text-[#1DB954]" />
-                      Top 5 Titres
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">Tes titres les plus écoutés</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {topTracks.map((track, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
-                              {index + 1}
-                            </span>
-                            <div>
-                              <p className="font-medium">{track.name}</p>
-                              <p className="text-sm text-gray-400">{track.artist}</p>
-                            </div>
-                          </div>
-                          <span className="text-sm text-gray-400">{track.plays} écoutes</span>
+                {loadingTopData ? (
+                  <p>Chargement des données principales...</p>
+                ) : errorTopData ? (
+                  <p className="text-red-500">Erreur: {errorTopData}</p>
+                ) : (
+                  <>
+                    <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Music className="h-5 w-5 text-[#1DB954]" />
+                          Top 5 Titres
+                        </CardTitle>
+                        <CardDescription className="text-gray-400">Tes titres les plus écoutés</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {topTracks.length > 0 ? (
+                            topTracks.map((track, index) => (
+                              <div key={track.id || index} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
+                                    {index + 1}
+                                  </span>
+                                  <div>
+                                    <p className="font-medium">{track.name}</p>
+                                    <p className="text-sm text-gray-400">
+                                      {track.artists.map((artist: any) => artist.name).join(", ")}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span className="text-sm text-gray-400">
+                                  {track.popularity} popularité (exemple)
+                                </span>{" "}
+                                {/* Replace with actual plays count */}
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-400">Aucun titre trouvé.</p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
 
-                <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <TrendingUp className="h-5 w-5 text-[#1DB954]" />
-                      Top 5 Artistes
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">Tes artistes préférés</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {topArtists.map((artist, index) => (
-                        <div key={index} className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
-                              {index + 1}
-                            </span>
-                            <p className="font-medium">{artist.name}</p>
-                          </div>
-                          <span className="text-sm text-gray-400">{artist.plays} écoutes</span>
+                    <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <TrendingUp className="h-5 w-5 text-[#1DB954]" />
+                          Top 5 Artistes
+                        </CardTitle>
+                        <CardDescription className="text-gray-400">Tes artistes préférés</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {topArtists.length > 0 ? (
+                            topArtists.map((artist, index) => (
+                              <div key={artist.id || index} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
+                                    {index + 1}
+                                  </span>
+                                  <p className="font-medium">{artist.name}</p>
+                                </div>
+                                <span className="text-sm text-gray-400">
+                                  {artist.popularity} popularité (exemple)
+                                </span>{" "}
+                                {/* Replace with actual plays count */}
+                              </div>
+                            ))
+                          ) : (
+                            <p className="text-gray-400">Aucun artiste trouvé.</p>
+                          )}
                         </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
               </>
             )}
 
-            {activeTab === "tracks" && (
-              <Card className="border-white/10 bg-white/5 backdrop-blur-sm lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Music className="h-5 w-5 text-[#1DB954]" />
-                    Tous tes titres préférés
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">Classés par nombre d'écoutes</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {topTracks.map((track, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4 transition-all hover:bg-white/10"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
-                            {index + 1}
-                          </span>
-                          <div>
-                            <p className="text-lg font-medium">{track.name}</p>
-                            <p className="text-gray-400">{track.artist}</p>
-                          </div>
-                        </div>
-                        <span className="text-lg font-semibold text-[#1DB954]">{track.plays} écoutes</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {activeTab === "artists" && (
-              <Card className="border-white/10 bg-white/5 backdrop-blur-sm lg:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <TrendingUp className="h-5 w-5 text-[#1DB954]" />
-                    Tous tes artistes préférés
-                  </CardTitle>
-                  <CardDescription className="text-gray-400">Classés par nombre d'écoutes</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {topArtists.map((artist, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-4 transition-all hover:bg-white/10"
-                      >
-                        <div className="flex items-center gap-4">
-                          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
-                            {index + 1}
-                          </span>
-                          <p className="text-lg font-medium">{artist.name}</p>
-                        </div>
-                        <span className="text-lg font-semibold text-[#1DB954]">{artist.plays} écoutes</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
           </div>
         )}
       </main>
