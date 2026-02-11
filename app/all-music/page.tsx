@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Music } from "lucide-react"
+import { Music, Filter, ChevronDown, ChevronUp, Calendar, User, Clock } from "lucide-react"
 import PageLayout from "@/components/PageLayout"
-import { CsvImporter } from "@/components/CsvImporter"
+import { CsvImporter, analyzeData } from "@/components/CsvImporter"
 import { Input } from "@/components/ui/input"
 
 interface SpotifyStreamingData {
@@ -27,26 +27,101 @@ interface ParsedStats {
   dailyData: { date: string; minutes: number; streams: number }[]
 }
 
+interface Filters {
+  artistSearch: string
+  trackSearch: string
+  dateFrom: string
+  dateTo: string
+  minPlaytime: number
+}
+
 export default function AllMusicPage() {
   const [allRawData, setAllRawData] = useState<SpotifyStreamingData[]>([])
   const [importedStats, setImportedStats] = useState<ParsedStats | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<Filters>({
+    artistSearch: "",
+    trackSearch: "",
+    dateFrom: "",
+    dateTo: "",
+    minPlaytime: 0,
+  })
 
   const handleDataImported = (data: ParsedStats, rawData: SpotifyStreamingData[]) => {
     setImportedStats(data)
     setAllRawData(rawData)
   }
 
+  const resetFilters = () => {
+    setFilters({
+      artistSearch: "",
+      trackSearch: "",
+      dateFrom: "",
+      dateTo: "",
+      minPlaytime: 0,
+    })
+  }
+
+  // Filter data based on current filters
+  const filteredData = useMemo(() => {
+    if (allRawData.length === 0) return []
+
+    return allRawData.filter((item) => {
+      if (filters.artistSearch && !item.artistName.toLowerCase().includes(filters.artistSearch.toLowerCase())) {
+        return false
+      }
+      if (filters.trackSearch && !item.trackName.toLowerCase().includes(filters.trackSearch.toLowerCase())) {
+        return false
+      }
+      if (filters.dateFrom && item.endTime) {
+        const itemDate = new Date(item.endTime)
+        const fromDate = new Date(filters.dateFrom)
+        if (itemDate < fromDate) return false
+      }
+      if (filters.dateTo && item.endTime) {
+        const itemDate = new Date(item.endTime)
+        const toDate = new Date(filters.dateTo)
+        if (itemDate > toDate) return false
+      }
+      if (filters.minPlaytime > 0 && item.msPlayed / 60000 < filters.minPlaytime) {
+        return false
+      }
+      return true
+    })
+  }, [allRawData, filters])
+
+  // Recalculate stats based on filtered data
+  const filteredStats = useMemo(() => {
+    if (filteredData.length === 0) {
+      return {
+        totalStreams: 0,
+        totalMinutes: 0,
+        uniqueTracks: 0,
+        uniqueArtists: 0,
+        topTracks: [],
+        topArtists: [],
+        monthlyData: [],
+        hourlyData: [],
+        weekdayData: [],
+        dailyData: [],
+      };
+    }
+    return analyzeData(filteredData)
+  }, [filteredData])
+
+
   const allUniqueTracks = useMemo(() => {
+    if (!importedStats || filteredData.length === 0) return []
     const uniqueTracksMap = new Map<string, { name: string; artist: string }>()
-    allRawData.forEach(item => {
+    filteredData.forEach(item => {
       const key = `${item.trackName}-${item.artistName}`
       if (!uniqueTracksMap.has(key)) {
         uniqueTracksMap.set(key, { name: item.trackName, artist: item.artistName })
       }
     })
     return Array.from(uniqueTracksMap.values()).sort((a, b) => a.name.localeCompare(b.name))
-  }, [allRawData])
+  }, [importedStats, filteredData])
 
   const filteredTracks = useMemo(() => {
     if (!searchTerm) {
@@ -80,6 +155,103 @@ export default function AllMusicPage() {
 
         {importedStats && (
           <>
+            {/* Filters */}
+            <Card className="border-white/10 bg-white/5 backdrop-blur-sm mb-6">
+              <CardHeader className="cursor-pointer" onClick={() => setShowFilters(!showFilters)}>
+                <CardTitle className="flex items-center justify-between text-white">
+                  <div className="flex items-center gap-2">
+                    <Filter className="h-5 w-5 text-[#1DB954]" />
+                    Filtres avancés
+                    {(filters.artistSearch || filters.trackSearch || filters.dateFrom || filters.dateTo || filters.minPlaytime > 0) && (
+                      <span className="rounded-full bg-[#1DB954]/20 px-2 py-1 text-xs text-[#1DB954]">Actifs</span>
+                    )}
+                  </div>
+                  {showFilters ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                </CardTitle>
+              </CardHeader>
+              {showFilters && (
+                <CardContent>
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        <User className="mr-1 inline h-4 w-4" />
+                        Artiste
+                      </label>
+                      <Input
+                        placeholder="Rechercher un artiste..."
+                        value={filters.artistSearch}
+                        onChange={(e) => setFilters({ ...filters, artistSearch: e.target.value })}
+                        className="border-white/10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        <Music className="mr-1 inline h-4 w-4" />
+                        Titre
+                      </label>
+                      <Input
+                        placeholder="Rechercher un titre..."
+                        value={filters.trackSearch}
+                        onChange={(e) => setFilters({ ...filters, trackSearch: e.target.value })}
+                        className="border-white/10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        <Clock className="mr-1 inline h-4 w-4" />
+                        Durée minimum (min)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={filters.minPlaytime || ""}
+                        onChange={(e) => setFilters({ ...filters, minPlaytime: Number.parseInt(e.target.value) || 0 })}
+                        className="border-white/10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        <Calendar className="mr-1 inline h-4 w-4" />
+                        Date de début
+                      </label>
+                      <Input
+                        type="date"
+                        value={filters.dateFrom}
+                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+                        className="border-white/10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm text-gray-400">
+                        <Calendar className="mr-1 inline h-4 w-4" />
+                        Date de fin
+                      </label>
+                      <Input
+                        type="date"
+                        value={filters.dateTo}
+                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+                        className="border-white/10 bg-white/5 text-white"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      <Button
+                        variant="outline"
+                        onClick={resetFilters}
+                        className="w-full border-white/10 text-white bg-transparent"
+                      >
+                        Réinitialiser
+                      </Button>
+                    </div>
+                  </div>
+                  {(filters.artistSearch || filters.trackSearch || filters.dateFrom || filters.dateTo || filters.minPlaytime > 0) && (
+                    <p className="mt-4 text-sm text-gray-400">
+                      {filteredData.length} écoutes correspondent aux filtres (sur {allRawData.length} total)
+                    </p>
+                  )}
+                </CardContent>
+              )}
+            </Card>
+
             <div className="mb-6">
               <Input
                 type="text"
@@ -117,6 +289,7 @@ export default function AllMusicPage() {
             </div>
           </>
         )}
+
       </div>
     </PageLayout>
   )
