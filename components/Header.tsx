@@ -4,7 +4,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Menu, X, ChevronDown } from "lucide-react"
+import { Menu, X } from "lucide-react"
 
 type Props = {
   onLogin?: () => void
@@ -12,7 +12,6 @@ type Props = {
 
 export default function Header({ onLogin }: Props) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [productDropdownOpen, setProductDropdownOpen] = useState(false)
 
   const handleLogin = () => {
     if (onLogin) {
@@ -35,52 +34,11 @@ export default function Header({ onLogin }: Props) {
 
         {/* Desktop Navigation */}
         <div className="hidden items-center gap-6 lg:flex">
-          {/* Product Dropdown */}
-          <div className="relative">
-            <button
-              className="flex items-center gap-1 text-sm text-gray-300 transition-colors hover:text-white"
-              onMouseEnter={() => setProductDropdownOpen(true)}
-              onMouseLeave={() => setProductDropdownOpen(false)}
-            >
-              Produit
-              <ChevronDown className="h-4 w-4" />
-            </button>
-            {productDropdownOpen && (
-              <div
-                className="absolute left-0 top-full mt-2 w-48 rounded-lg border border-white/10 bg-black/95 p-2 backdrop-blur-xl"
-                onMouseEnter={() => setProductDropdownOpen(true)}
-                onMouseLeave={() => setProductDropdownOpen(false)}
-              >
-                <Link
-                  href="/features"
-                  className="block rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-[#1DB954]"
-                >
-                  Fonctionnalités
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="block rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-[#1DB954]"
-                >
-                  Tarifs
-                </Link>
-                <Link
-                  href="/faq"
-                  className="block rounded-md px-3 py-2 text-sm text-gray-300 transition-colors hover:bg-white/10 hover:text-[#1DB954]"
-                >
-                  FAQ
-                </Link>
-              </div>
-            )}
-          </div>
-
-          <Link href="/about" className="text-sm text-gray-300 transition-colors hover:text-white">
-            À propos
+          <Link href="/dashboard" className="text-sm text-gray-300 transition-colors hover:text-[#1DB954]">
+            Dashboard
           </Link>
-          <Link href="/blog" className="text-sm text-gray-300 transition-colors hover:text-white">
-            Blog
-          </Link>
-          <Link href="/careers" className="text-sm text-gray-300 transition-colors hover:text-white">
-            Carrières
+          <Link href="/all-music" className="text-sm text-gray-300 transition-colors hover:text-[#1DB954]">
+            Ma Musique
           </Link>
         </div>
 
@@ -105,46 +63,18 @@ export default function Header({ onLogin }: Props) {
         <div className="lg:hidden border-t border-white/10 bg-black/95 backdrop-blur-xl">
           <div className="container mx-auto px-4 py-4 space-y-4">
             <Link
-              href="/features"
+              href="/dashboard"
               className="block text-gray-300 transition-colors hover:text-[#1DB954]"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Fonctionnalités
+              Dashboard
             </Link>
             <Link
-              href="/pricing"
+              href="/all-music"
               className="block text-gray-300 transition-colors hover:text-[#1DB954]"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Tarifs
-            </Link>
-            <Link
-              href="/faq"
-              className="block text-gray-300 transition-colors hover:text-[#1DB954]"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              FAQ
-            </Link>
-            <Link
-              href="/about"
-              className="block text-gray-300 transition-colors hover:text-[#1DB954]"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              À propos
-            </Link>
-            <Link
-              href="/blog"
-              className="block text-gray-300 transition-colors hover:text-[#1DB954]"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Blog
-            </Link>
-            <Link
-              href="/careers"
-              className="block text-gray-300 transition-colors hover:text-[#1DB954]"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Carrières
+              Ma Musique
             </Link>
             <Button
               className="w-full rounded-full bg-[#1DB954] text-black font-semibold transition-all hover:bg-[#1ed760]"
