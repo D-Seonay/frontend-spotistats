@@ -5,6 +5,13 @@ export interface SpotifyStreamingData {
   msPlayed: number
 }
 
+export interface AdvancedStats {
+  peakListeningHour: number;
+  skipIndex: number;
+  weekendListenRatio: number;
+  topLoyalArtist: { name: string; plays: number };
+}
+
 export interface ParsedStats {
   totalStreams: number
   totalMinutes: number
