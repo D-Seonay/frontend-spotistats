@@ -11,144 +11,11 @@ import SpotifyPlayer from "@/components/SpotifyPlayer"
 import { Calendar } from "lucide-react"
 import { useMemo } from "react"
 import { useData } from "@/lib/DataContext"
-
-// Define ParsedStats interface as per CsvImporter.tsx
-interface ParsedStats {
-  totalStreams: number
-  totalMinutes: number
-  uniqueTracks: number
-  uniqueArtists: number
-  topTracks: { name: string; artist: string; plays: number; minutes: number }[]
-  topArtists: { name: string; plays: number; minutes: number }[]
-  monthlyData: { month: string; minutes: number; streams: number }[]
-  hourlyData: { hour: string; streams: number }[]
-  weekdayData: { day: string; streams: number }[]
-  dailyData: { date: string; minutes: number; streams: number }[]
-}
-
-interface SpotifyStreamingData {
-  endTime: string
-  artistName: string
-  trackName: string
-  msPlayed: number
-}
-
-// Activity Heatmap Component (GitHub-style)
-function ActivityHeatmap({ data }: { data: { date: string; minutes: number; streams: number }[] }) {
-  const weeks = useMemo(() => {
-    if (!data || data.length === 0) return []
-
-    const dataMap = new Map(data.map((d) => [d.date, d]))
-    const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(startDate.getDate() - 364)
-
-    const allDays: { date: string; minutes: number; streams: number; weekday: number }[] = []
-    const current = new Date(startDate)
-
-    while (current <= endDate) {
-      const dateStr = current.toISOString().split("T")[0]
-      const existing = dataMap.get(dateStr)
-      allDays.push({
-        date: dateStr,
-        minutes: existing?.minutes || 0,
-        streams: existing?.streams || 0,
-        weekday: current.getDay(),
-      })
-      current.setDate(current.getDate() + 1)
-    }
-
-    const weeksArray: (typeof allDays)[] = []
-    let currentWeek: typeof allDays = []
-
-    allDays.forEach((day, index) => {
-      if (index === 0) {
-        for (let i = 0; i < day.weekday; i++) {
-          currentWeek.push({ date: "", minutes: 0, streams: 0, weekday: i })
-        }
-      }
-      currentWeek.push(day)
-      if (day.weekday === 6 || index === allDays.length - 1) {
-        weeksArray.push(currentWeek)
-        currentWeek = []
-      }
-    })
-
-    return weeksArray
-  }, [data])
-
-  const maxMinutes = useMemo(() => {
-    if (!data || data.length === 0) return 1
-    return Math.max(...data.map((d) => d.minutes), 1)
-  }, [data])
-
-  const getIntensity = (minutes: number) => {
-    if (minutes === 0) return "bg-white/5"
-    const ratio = minutes / maxMinutes
-    if (ratio < 0.25) return "bg-[#1DB954]/30"
-    if (ratio < 0.5) return "bg-[#1DB954]/50"
-    if (ratio < 0.75) return "bg-[#1DB954]/70"
-    return "bg-[#1DB954]"
-  }
-
-  const dayLabels = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
-
-  if (weeks.length === 0) {
-    return (
-      <div className="flex h-32 items-center justify-center text-gray-500">
-        Aucune donnée disponible pour la heatmap
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-1 overflow-x-auto pb-2">
-        <div className="flex flex-col gap-1 pr-2 text-xs text-gray-500">
-          {dayLabels.map((day, i) => (
-            <div key={i} className="h-3 leading-3">
-              {i % 2 === 1 ? day : ""}
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-1">
-          {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-1">
-              {week.map((day, dayIndex) => (
-                <div
-                  key={dayIndex}
-                  className={`group relative h-3 w-3 rounded-sm transition-all hover:ring-1 hover:ring-white/50 ${
-                    day.date ? getIntensity(day.minutes) : "bg-transparent"
-                  }`}
-                >
-                  {day.date && day.minutes > 0 && (
-                    <div className="pointer-events-none absolute -top-12 left-1/2 z-50 hidden -translate-x-1/2 whitespace-nowrap rounded bg-black/90 px-2 py-1 text-xs group-hover:block">
-                      <p className="font-medium">{day.date}</p>
-                      <p className="text-gray-400">
-                        {day.minutes} min · {day.streams} écoutes
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
-        <span>Moins</span>
-        <div className="flex gap-1">
-          <div className="h-3 w-3 rounded-sm bg-white/5" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/30" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/50" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/70" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]" />
-        </div>
-        <span>Plus</span>
-      </div>
-    </div>
-  )
-}
+import { ParsedStats, SpotifyStreamingData } from "@/lib/types"
+import { ActivityHeatmap } from "@/components/ActivityHeatmap"
+import { StatCardWidget } from "@/components/StatCardWidget"
+import { TopArtistsWidget } from "@/components/TopArtistsWidget"
+import { TopTracksWidget } from "@/components/TopTracksWidget"
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -334,88 +201,12 @@ export default function DashboardPage() {
 
                 {/* Top Artists (2x3) */}
                 <div className="md:col-span-2 md:row-span-3">
-                  <Card className="h-full border-white/10 bg-white/5 backdrop-blur-sm">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div>
-                        <CardTitle className="flex items-center gap-2">
-                          <TrendingUp className="h-5 w-5 text-[#1DB954]" />
-                          Top 5 Artistes
-                        </CardTitle>
-                        <CardDescription className="text-gray-400">Tes artistes préférés</CardDescription>
-                      </div>
-                      <Link href="/all-artists">
-                        <Button variant="ghost" size="sm" className="text-gray-300 hover:text-[#1DB954]">
-                          Voir tout
-                        </Button>
-                      </Link>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {displayStats.topArtists.length > 0 ? (
-                          displayStats.topArtists.slice(0, 5).map((artist, index) => (
-                            <div key={artist.name + index} className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
-                                  {index + 1}
-                                </span>
-                                <p className="font-medium">{artist.name}</p>
-                              </div>
-                              <span className="text-sm text-gray-400">
-                                {artist.plays} écoutes
-                              </span>{" "}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-gray-400">Aucun artiste trouvé.</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TopArtistsWidget topArtists={displayStats.topArtists} />
                 </div>
 
                 {/* Top Tracks (2x3) */}
                 <div className="md:col-span-2 md:row-span-3">
-                  <Card className="h-full border-white/10 bg-white/5 backdrop-blur-sm">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                      <div className="space-y-1.5">
-                        <CardTitle className="flex items-center gap-2">
-                          <Music className="h-5 w-5 text-[#1DB954]" />
-                          Top 5 Titres
-                        </CardTitle>
-                      </div>
-                      <Link href="/all-music">
-                        <Button variant="ghost" size="sm" className="text-gray-300 hover:text-[#1DB954]">
-                          Voir tout
-                        </Button>
-                      </Link>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {displayStats.topTracks.length > 0 ? (
-                          displayStats.topTracks.slice(0, 5).map((track, index) => (
-                            <div key={track.name + track.artist + index} className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
-                                  {index + 1}
-                                </span>
-                                <div>
-                                  <p className="font-medium">{track.name}</p>
-                                  <p className="text-sm text-gray-400">
-                                    {track.artist}
-                                  </p>
-                                </div>
-                              </div>
-                              <span className="text-sm text-gray-400">
-                                {track.plays} écoutes
-                              </span>{" "}
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-gray-400">Aucun titre trouvé.</p>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <TopTracksWidget topTracks={displayStats.topTracks} />
                 </div>
               </>
             )}
