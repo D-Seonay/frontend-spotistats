@@ -119,59 +119,35 @@ export default function DashboardPage() {
               <>
                 {/* Stat Flash Cards (1x1 each) */}
                 <div className="md:col-span-1 md:row-span-1">
-                  <Card className="h-full border-white/10 bg-gradient-to-br from-[#1DB954]/20 to-transparent backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-400">
-                        <Clock className="h-4 w-4" />
-                        Temps d'écoute (h)
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-[#1DB954]">{stats.totalListeningTime}</p>
-                    </CardContent>
-                  </Card>
+                  <StatCardWidget
+                    title="Temps d'écoute (h)"
+                    icon={<Clock className="h-4 w-4" />}
+                    value={stats.totalListeningTime}
+                  />
                 </div>
 
                 <div className="md:col-span-1 md:row-span-1">
-                  <Card className="h-full border-white/10 bg-gradient-to-br from-[#1DB954]/20 to-transparent backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-400">
-                        <Heart className="h-4 w-4" />
-                        Genre préféré
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-[#1DB954]">{stats.topGenre}</p>
-                    </CardContent>
-                  </Card>
+                  <StatCardWidget
+                    title="Genre préféré"
+                    icon={<Heart className="h-4 w-4" />}
+                    value={stats.topGenre}
+                  />
                 </div>
 
                 <div className="md:col-span-1 md:row-span-1">
-                  <Card className="h-full border-white/10 bg-gradient-to-br from-[#1DB954]/20 to-transparent backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-400">
-                        <Music className="h-4 w-4" />
-                        Total Titres
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-[#1DB954]">{stats.totalTracks}</p>
-                    </CardContent>
-                  </Card>
+                  <StatCardWidget
+                    title="Total Titres"
+                    icon={<Music className="h-4 w-4" />}
+                    value={stats.totalTracks}
+                  />
                 </div>
 
                 <div className="md:col-span-1 md:row-span-1">
-                  <Card className="h-full border-white/10 bg-gradient-to-br from-[#1DB954]/20 to-transparent backdrop-blur-sm">
-                    <CardHeader className="pb-2">
-                      <CardTitle className="flex items-center gap-2 text-sm font-medium text-gray-400">
-                        <TrendingUp className="h-4 w-4" />
-                        Total Artistes
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-3xl font-bold text-[#1DB954]">{stats.totalArtists}</p>
-                    </CardContent>
-                  </Card>
+                  <StatCardWidget
+                    title="Total Artistes"
+                    icon={<TrendingUp className="h-4 w-4" />}
+                    value={stats.totalArtists}
+                  />
                 </div>
 
                 {/* Heatmap (3x2) */}
