@@ -16,12 +16,18 @@ import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { StatCardWidget } from "@/components/StatCardWidget"
 import { TopArtistsWidget } from "@/components/TopArtistsWidget"
 import { TopTracksWidget } from "@/components/TopTracksWidget"
+import { ListeningHabitsWidget } from "@/components/widgets/ListeningHabitsWidget"
+import { LoyaltyWidget } from "@/components/widgets/LoyaltyWidget"
+import { TemporalTrendsWidget } from "@/components/widgets/TemporalTrendsWidget"
+import { calculateAdvancedStats } from "@/lib/stats-utils"
 
 export default function DashboardPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
   const [deviceId, setDeviceId] = useState<string | null>(null)
-  const { importedStats, setImportedData } = useData()
+  const { importedStats, setImportedData, allRawData } = useData()
+
+  const advancedStats = useMemo(() => importedStats ? calculateAdvancedStats(allRawData) : null, [importedStats, allRawData]);
 
   const handleDataImported = (stats: ParsedStats, rawData: SpotifyStreamingData[]) => {
     setImportedData(stats, rawData)
@@ -110,7 +116,7 @@ export default function DashboardPage() {
         {activeTab === "import" ? (
           <CsvImporter onDataImported={handleDataImported} />
         ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-6 lg:gap-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-9 lg:gap-6">
             {!importedStats ? (
               <div className="col-span-full">
                 <p>Importez vos données Spotify (fichiers CSV/JSON) pour voir vos statistiques.</p>
@@ -149,6 +155,21 @@ export default function DashboardPage() {
                     value={stats.totalArtists}
                   />
                 </div>
+
+                {/* New Widgets */}
+                {advancedStats && (
+                  <>
+                    <div className="md:col-span-2 md:row-span-1">
+                      <ListeningHabitsWidget stats={advancedStats} />
+                    </div>
+                    <div className="md:col-span-1 md:row-span-1">
+                      <LoyaltyWidget stats={advancedStats} />
+                    </div>
+                    <div className="md:col-span-1 md:row-span-1">
+                      <TemporalTrendsWidget dailyData={displayStats.dailyData} />
+                    </div>
+                  </>
+                )}
 
                 {/* Heatmap (3x2) */}
                 <div className="md:col-span-3 md:row-span-2">

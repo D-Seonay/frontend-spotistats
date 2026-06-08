@@ -13,7 +13,7 @@ export function calculateAdvancedStats(data: SpotifyStreamingData[]): AdvancedSt
   // peakListeningHour
   const hourCounts: Record<number, number> = {};
   data.forEach((d) => {
-    const hour = new Date(d.endTime).getHours();
+    const hour = new Date(d.endTime).getUTCHours();
     hourCounts[hour] = (hourCounts[hour] || 0) + 1;
   });
   let peakListeningHour = 0;
@@ -27,7 +27,7 @@ export function calculateAdvancedStats(data: SpotifyStreamingData[]): AdvancedSt
 
   // weekendListenRatio
   const weekendStreams = data.filter((d) => {
-    const day = new Date(d.endTime).getDay();
+    const day = new Date(d.endTime).getUTCDay();
     return day === 0 || day === 6;
   }).length;
   const weekendListenRatio = weekendStreams / data.length;
