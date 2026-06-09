@@ -10,6 +10,7 @@ import { calculateAdvancedStats } from "@/lib/stats-utils"
 import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { TopArtistsWidget } from "@/components/TopArtistsWidget"
 import { TopTracksWidget } from "@/components/TopTracksWidget"
+import { NowPlayingBar } from "@/components/NowPlayingBar"
 import SpotifyPlayer from "@/components/SpotifyPlayer"
 import { ParsedStats, SpotifyStreamingData } from "@/lib/types"
 
@@ -152,7 +153,7 @@ function StatBlock({
 // ─── Dashboard Content ────────────────────────────────────────────────────────
 
 function DashboardContent() {
-  const { allRawData, importedStats, setImportedData } = useData()
+  const { allRawData, importedStats, setImportedData, nowPlaying } = useData()
   const { filters } = useAppFilters()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
@@ -223,7 +224,7 @@ function DashboardContent() {
   const hours = Math.round(displayStats.totalMinutes / 60)
 
   return (
-    <div style={{ background: "#f2ede4" }}>
+    <div style={{ background: "#f2ede4", paddingBottom: nowPlaying ? "80px" : "0px" }}>
 
       {/* ── Hero section ── */}
       <div style={{ border: "2px solid #111" }}>
@@ -350,6 +351,7 @@ function DashboardContent() {
         <TopTracksWidget topTracks={displayStats.topTracks} />
       </div>
 
+      <NowPlayingBar />
     </div>
   )
 }

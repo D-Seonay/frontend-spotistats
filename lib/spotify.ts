@@ -73,6 +73,10 @@ async function spotifyFetch(endpoint: string, method: string = "GET", body?: any
     return null
   }
 
+  if (response.status === 204) {
+    return null
+  }
+
   return response.json()
 }
 
