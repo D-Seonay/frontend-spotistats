@@ -73,9 +73,21 @@ async function spotifyFetch(endpoint: string, method: string = "GET", body?: any
     return null
   }
 
+  if (response.status === 204) {
+    return null
+  }
+
   return response.json()
 }
 
 export async function searchSpotify(query: string, type: "track" | "artist", limit: number = 1): Promise<any> {
   return spotifyFetch(`/search?q=${encodeURIComponent(query)}&type=${type}&limit=${limit}`)
+}
+
+export async function getRecentlyPlayed(limit: number = 50): Promise<any> {
+  return spotifyFetch(`/me/player/recently-played?limit=${limit}`)
+}
+
+export async function getNowPlaying(): Promise<any> {
+  return spotifyFetch(`/me/player/currently-playing`)
 }

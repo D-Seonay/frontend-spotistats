@@ -10,6 +10,8 @@ import { calculateAdvancedStats } from "@/lib/stats-utils"
 import { ActivityHeatmap } from "@/components/ActivityHeatmap"
 import { TopArtistsWidget } from "@/components/TopArtistsWidget"
 import { TopTracksWidget } from "@/components/TopTracksWidget"
+import { NowPlayingBar } from "@/components/NowPlayingBar"
+import { RecentlyPlayedList } from "@/components/RecentlyPlayedList"
 import SpotifyPlayer from "@/components/SpotifyPlayer"
 import { ParsedStats, SpotifyStreamingData } from "@/lib/types"
 
@@ -111,16 +113,35 @@ function StatBlock({
   eyebrow,
   value,
   accent,
+  isLive,
 }: {
   eyebrow: string
   value: string
   accent?: boolean
+  isLive?: boolean
 }) {
   return (
     <div
-      className="flex flex-col justify-center p-5"
+      className="flex flex-col justify-center p-5 relative overflow-hidden"
       style={{ borderLeft: "2px solid #111" }}
     >
+      {isLive && (
+        <div 
+          className="absolute top-2 right-2 px-1.5 py-0.5 animate-pulse"
+          style={{ 
+            background: "#1DB954", 
+            color: "#000", 
+            fontSize: 8, 
+            fontWeight: 900,
+            fontFamily: "var(--font-mono-brand)",
+            letterSpacing: "0.05em",
+            borderRadius: 2,
+            border: "1px solid #111"
+          }}
+        >
+          LIVE
+        </div>
+      )}
       <p
         style={{
           fontFamily: "var(--font-mono-brand)",
@@ -152,7 +173,7 @@ function StatBlock({
 // ─── Dashboard Content ────────────────────────────────────────────────────────
 
 function DashboardContent() {
-  const { allRawData, importedStats, setImportedData } = useData()
+  const { allRawData, apiData, mergedData, importedStats, setImportedData, nowPlaying } = useData()
   const { filters } = useAppFilters()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
@@ -162,8 +183,8 @@ function DashboardContent() {
   }, [searchParams])
 
   const filteredRawData = useMemo(
-    () => applyAppFilters(allRawData, filters),
-    [allRawData, filters],
+    () => applyAppFilters(mergedData, filters),
+    [mergedData, filters],
   )
 
   const displayStats = useMemo(() => {
@@ -221,9 +242,10 @@ function DashboardContent() {
   }
 
   const hours = Math.round(displayStats.totalMinutes / 60)
+  const isLive = apiData.length > 0
 
   return (
-    <div style={{ background: "#f2ede4" }}>
+    <div style={{ background: "#f2ede4", paddingBottom: nowPlaying ? "80px" : "0px" }}>
 
       {/* ── Hero section ── */}
       <div style={{ border: "2px solid #111" }}>
@@ -235,12 +257,30 @@ function DashboardContent() {
         >
           {/* Big time block */}
           <div
+            className="relative overflow-hidden"
             style={{
               borderRight: "2px solid #111",
               padding: "24px 32px",
               minWidth: 240,
             }}
           >
+            {isLive && (
+              <div 
+                className="absolute top-2 right-2 px-1.5 py-0.5 animate-pulse"
+                style={{ 
+                  background: "#1DB954", 
+                  color: "#000", 
+                  fontSize: 8, 
+                  fontWeight: 900,
+                  fontFamily: "var(--font-mono-brand)",
+                  letterSpacing: "0.05em",
+                  borderRadius: 2,
+                  border: "1px solid #111"
+                }}
+              >
+                LIVE
+              </div>
+            )}
             <p
               style={{
                 fontFamily: "var(--font-mono-brand)",
@@ -279,8 +319,8 @@ function DashboardContent() {
             </div>
           </div>
 
-          <StatBlock eyebrow="Titres uniques" value={displayStats.uniqueTracks.toLocaleString()} />
-          <StatBlock eyebrow="Artistes" value={displayStats.uniqueArtists.toLocaleString()} />
+          <StatBlock isLive={isLive} eyebrow="Titres uniques" value={displayStats.uniqueTracks.toLocaleString()} />
+          <StatBlock isLive={isLive} eyebrow="Artistes" value={displayStats.uniqueArtists.toLocaleString()} />
           <StatBlock
             eyebrow="Pic d'écoute"
             value={advancedStats ? `${advancedStats.peakListeningHour}h` : "—"}
@@ -317,6 +357,20 @@ function DashboardContent() {
           >
             <span style={{ color: "#1DB954", fontWeight: 700 }}>// </span>
             Activité · {filterLabel}
+            {isLive && (
+              <span 
+                className="ml-2 px-1 py-0.5 animate-pulse"
+                style={{ 
+                  background: "#1DB954", 
+                  color: "#000", 
+                  fontSize: 8, 
+                  fontWeight: 900,
+                  verticalAlign: "middle"
+                }}
+              >
+                LIVE
+              </span>
+            )}
           </p>
           <ActivityHeatmap data={displayStats.dailyData} />
         </div>
@@ -335,11 +389,11 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* ── Top Lists ── */}
+      {/* ── Top Lists + Recently Played ── */}
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "1fr 1fr 300px",
           border: "2px solid #111",
           borderTop: "none",
         }}
@@ -347,9 +401,15 @@ function DashboardContent() {
         <div style={{ borderRight: "2px solid #111" }}>
           <TopArtistsWidget topArtists={displayStats.topArtists} />
         </div>
-        <TopTracksWidget topTracks={displayStats.topTracks} />
+        <div style={{ borderRight: "2px solid #111" }}>
+          <TopTracksWidget topTracks={displayStats.topTracks} />
+        </div>
+        <div style={{ background: "#f2ede4", padding: "16px" }}>
+          <RecentlyPlayedList />
+        </div>
       </div>
 
+      <NowPlayingBar />
     </div>
   )
 }
