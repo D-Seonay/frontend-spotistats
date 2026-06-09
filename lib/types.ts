@@ -24,3 +24,23 @@ export interface ParsedStats {
   weekdayData: { day: string; streams: number }[]
   dailyData: { date: string; minutes: number; streams: number }[]
 }
+
+export interface SpotifyApiTrack {
+  id: string;
+  name: string;
+  artists: { name: string }[];
+  album: { name: string; images: { url: string }[] };
+  duration_ms: number;
+}
+
+export interface SpotifyRecentlyPlayedItem {
+  track: SpotifyApiTrack;
+  played_at: string; // ISO timestamp
+}
+
+export interface SpotifyNowPlaying {
+  item: SpotifyApiTrack | null;
+  is_playing: boolean;
+  progress_ms: number;
+  timestamp: number;
+}
