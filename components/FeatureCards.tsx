@@ -1,16 +1,15 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
 import { Lock, Music, TrendingUp } from "lucide-react"
 
 type Props = { onLogin: () => void }
 
 export default function FeatureCards({ onLogin }: Props) {
   return (
-    <section id="fonctionnalites" className="py-16 md:py-24 bg-gradient-to-b from-black to-[#0a0a0a]">
+    <section id="fonctionnalites" className="py-16 md:py-24 bg-white border-b-4 border-black">
       <div className="container mx-auto px-4">
-        <div className="grid gap-8 md:grid-cols-3">
+        <div className="grid md:grid-cols-3 divide-y-4 md:divide-y-0 md:divide-x-4 divide-black border-y-4 border-black border-l-0 border-r-0">
           <FeatureCard
             icon={<Music className="h-7 w-7 text-black" />}
             title="Connecter & Explorer"
@@ -27,8 +26,9 @@ export default function FeatureCards({ onLogin }: Props) {
             description="Accède à des comparaisons avancées, des tendances hebdo, et des drops bêta."
             footer={
               <Button
-                className="mt-4 rounded-full bg-[#1DB954] text-black font-semibold transition-all duration-300 hover:bg-[#1ed760] hover:scale-105 hover:shadow-lg hover:shadow-[#1DB954]/30"
+                className="mt-4 rounded-none border-4 border-black bg-[#1DB954] px-8 py-6 text-base font-black uppercase tracking-wider text-black shadow-[4px_4px_0_0_#000] transition-all hover:bg-[#1ed760] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#000]"
                 onClick={onLogin}
+                style={{ fontFamily: "var(--font-mono-brand)" }}
               >
                 Créer un compte
               </Button>
@@ -52,16 +52,17 @@ function FeatureCard({
   footer?: React.ReactNode
 }) {
   return (
-    <Card className="group relative overflow-hidden border-white/10 bg-gradient-to-br from-zinc-900/80 to-zinc-800/80 p-8 backdrop-blur-sm transition-all duration-500 hover:scale-105 hover:border-[#1DB954]/50 hover:shadow-2xl hover:shadow-[#1DB954]/20">
-      <div className="absolute inset-0 bg-gradient-to-br from-[#1DB954]/5 to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-      <div className="relative">
-        <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#1DB954] shadow-lg transition-transform duration-500 group-hover:scale-110">
-          {icon}
-        </div>
-        <h3 className="mb-3 text-2xl font-bold">{title}</h3>
-        <p className="mb-6 text-gray-300">{description}</p>
-        {footer}
+    <div className="group relative bg-[#f2ede4] p-10 transition-colors hover:bg-white flex flex-col h-full">
+      <div className="mb-8 inline-flex h-16 w-16 items-center justify-center border-4 border-black bg-[#1DB954] shadow-[4px_4px_0_0_#000]">
+        {icon}
       </div>
-    </Card>
+      <h3 className="mb-4 text-2xl font-black uppercase tracking-tight text-black" style={{ fontFamily: "var(--font-display)" }}>
+        {title}
+      </h3>
+      <p className="mb-8 text-base font-medium text-gray-700 font-mono" style={{ fontFamily: "var(--font-mono-brand)" }}>
+        {description}
+      </p>
+      {footer && <div className="mt-auto">{footer}</div>}
+    </div>
   )
 }

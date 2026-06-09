@@ -27,7 +27,7 @@ function TrackRow({
           fontSize: 22,
           fontWeight: 900,
           color: index === 0 ? "#1DB954" : "#d5d0c8",
-          width: 36,
+          width: 48,
           flexShrink: 0,
           lineHeight: 1,
         }}
@@ -39,13 +39,13 @@ function TrackRow({
         <img
           src={imageUrl}
           alt={track.name}
-          style={{ width: 36, height: 36, objectFit: "cover", flexShrink: 0 }}
+          style={{ width: 48, height: 48, objectFit: "cover", flexShrink: 0 }}
         />
       ) : (
         <div
           style={{
-            width: 36,
-            height: 36,
+            width: 48,
+            height: 48,
             background: "#d5d0c8",
             flexShrink: 0,
             display: "flex",
@@ -53,7 +53,7 @@ function TrackRow({
             justifyContent: "center",
           }}
         >
-          <Disc style={{ width: 16, height: 16, color: "#888" }} />
+          <Disc style={{ width: 20, height: 20, color: "#888" }} />
         </div>
       )}
 
@@ -61,7 +61,7 @@ function TrackRow({
         <p
           style={{
             fontFamily: "var(--font-mono-brand)",
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: 700,
             color: "#111",
             overflow: "hidden",
@@ -75,7 +75,7 @@ function TrackRow({
         <p
           style={{
             fontFamily: "var(--font-mono-brand)",
-            fontSize: 11,
+            fontSize: 13,
             color: "#666",
             overflow: "hidden",
             textOverflow: "ellipsis",
@@ -86,13 +86,13 @@ function TrackRow({
           {track.artist}
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1, height: 2, background: "#d5d0c8" }}>
+          <div style={{ flex: 1, height: 4, background: "#d5d0c8" }}>
             <div style={{ width: `${barWidth}%`, height: "100%", background: "#111" }} />
           </div>
           <span
             style={{
               fontFamily: "var(--font-mono-brand)",
-              fontSize: 10,
+              fontSize: 12,
               color: "#666",
               flexShrink: 0,
             }}

@@ -27,7 +27,7 @@ function ArtistRow({
           fontSize: 22,
           fontWeight: 900,
           color: index === 0 ? "#1DB954" : "#d5d0c8",
-          width: 36,
+          width: 48,
           flexShrink: 0,
           lineHeight: 1,
         }}
@@ -39,13 +39,13 @@ function ArtistRow({
         <img
           src={imageUrl}
           alt={artist.name}
-          style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+          style={{ width: 48, height: 48, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
         />
       ) : (
         <div
           style={{
-            width: 36,
-            height: 36,
+            width: 48,
+            height: 48,
             borderRadius: "50%",
             background: "#d5d0c8",
             flexShrink: 0,
@@ -54,7 +54,7 @@ function ArtistRow({
             justifyContent: "center",
           }}
         >
-          <User style={{ width: 16, height: 16, color: "#888" }} />
+          <User style={{ width: 20, height: 20, color: "#888" }} />
         </div>
       )}
 
@@ -62,25 +62,24 @@ function ArtistRow({
         <p
           style={{
             fontFamily: "var(--font-mono-brand)",
-            fontSize: 12,
+            fontSize: 14,
             fontWeight: 700,
             color: "#111",
             overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
+            textOverflow: "ellipsis", whiteSpace: "nowrap",
             marginBottom: 5,
           }}
         >
           {artist.name}
         </p>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ flex: 1, height: 2, background: "#d5d0c8" }}>
+          <div style={{ flex: 1, height: 4, background: "#d5d0c8" }}>
             <div style={{ width: `${barWidth}%`, height: "100%", background: "#111" }} />
           </div>
           <span
             style={{
               fontFamily: "var(--font-mono-brand)",
-              fontSize: 10,
+              fontSize: 12,
               color: "#666",
               flexShrink: 0,
             }}
