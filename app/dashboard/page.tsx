@@ -127,16 +127,16 @@ function StatBlock({
     >
       {isLive && (
         <div 
-          className="absolute top-2 right-2 px-1.5 py-0.5 animate-pulse"
+          className="absolute top-2 right-2 px-1.5 py-1.5 animate-pulse"
           style={{ 
             background: "#1DB954", 
             color: "#000", 
-            fontSize: 8, 
+            fontSize: 10, 
             fontWeight: 900,
             fontFamily: "var(--font-mono-brand)",
             letterSpacing: "0.05em",
             borderRadius: 2,
-            border: "1px solid #111"
+            border: "2px solid #111"
           }}
         >
           LIVE
@@ -145,7 +145,8 @@ function StatBlock({
       <p
         style={{
           fontFamily: "var(--font-mono-brand)",
-          fontSize: 10,
+          fontSize: 12,
+          fontWeight: 700,
           color: "#666",
           textTransform: "uppercase",
           letterSpacing: "0.12em",
@@ -157,7 +158,7 @@ function StatBlock({
       <p
         style={{
           fontFamily: "var(--font-display)",
-          fontSize: 40,
+          fontSize: 48,
           fontWeight: 900,
           color: accent ? "#1DB954" : "#111",
           lineHeight: 1,
@@ -245,7 +246,7 @@ function DashboardContent() {
   const isLive = apiData.length > 0
 
   return (
-    <div style={{ background: "#f2ede4", paddingBottom: nowPlaying ? "80px" : "0px" }}>
+    <div style={{ background: "#f2ede4", paddingBottom: nowPlaying ? "112px" : "0px" }}>
 
       {/* ── Hero section ── */}
       <div style={{ border: "2px solid #111" }}>
@@ -266,16 +267,16 @@ function DashboardContent() {
           >
             {isLive && (
               <div 
-                className="absolute top-2 right-2 px-1.5 py-0.5 animate-pulse"
+                className="absolute top-2 right-2 px-1.5 py-1.5 animate-pulse"
                 style={{ 
                   background: "#1DB954", 
                   color: "#000", 
-                  fontSize: 8, 
+                  fontSize: 10, 
                   fontWeight: 900,
                   fontFamily: "var(--font-mono-brand)",
                   letterSpacing: "0.05em",
                   borderRadius: 2,
-                  border: "1px solid #111"
+                  border: "2px solid #111"
                 }}
               >
                 LIVE
@@ -284,7 +285,8 @@ function DashboardContent() {
             <p
               style={{
                 fontFamily: "var(--font-mono-brand)",
-                fontSize: 10,
+                fontSize: 12,
+                fontWeight: 700,
                 color: "#666",
                 textTransform: "uppercase",
                 letterSpacing: "0.12em",
@@ -348,7 +350,8 @@ function DashboardContent() {
           <p
             style={{
               fontFamily: "var(--font-mono-brand)",
-              fontSize: 10,
+              fontSize: 12,
+              fontWeight: 700,
               color: "#666",
               textTransform: "uppercase",
               letterSpacing: "0.12em",
@@ -359,13 +362,14 @@ function DashboardContent() {
             Activité · {filterLabel}
             {isLive && (
               <span 
-                className="ml-2 px-1 py-0.5 animate-pulse"
+                className="ml-2 px-1 py-1 animate-pulse"
                 style={{ 
                   background: "#1DB954", 
                   color: "#000", 
-                  fontSize: 8, 
+                  fontSize: 10, 
                   fontWeight: 900,
-                  verticalAlign: "middle"
+                  verticalAlign: "middle",
+                  border: "2px solid #111"
                 }}
               >
                 LIVE

@@ -56,7 +56,7 @@ export function NowPlayingBar() {
 
   return (
     <div className="fixed bottom-0 left-0 sm:left-16 right-0 z-50 bg-[#111] text-white border-t-2 border-black">
-      <div className="h-1 w-full bg-[#333]">
+      <div className="h-2 w-full bg-[#333]">
         <div 
           className="h-full bg-[#1DB954] transition-all duration-1000 ease-linear" 
           style={{ width: `${progress}%` }}
@@ -64,31 +64,31 @@ export function NowPlayingBar() {
       </div>
       <div className="flex items-center justify-between px-4 py-3 max-w-7xl mx-auto">
         <div className="flex items-center gap-4 overflow-hidden">
-          <div className="relative h-12 w-12 flex-shrink-0 border-2 border-black bg-[#222]">
+          <div className="relative h-16 w-16 flex-shrink-0 border-2 border-black bg-[#222]">
             {albumImage ? (
               <img src={albumImage} alt={item.album.name} className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center">
-                <Music className="h-6 w-6 text-gray-500" />
+                <Music className="h-8 w-8 text-gray-500" />
               </div>
             )}
           </div>
           <div className="overflow-hidden">
-            <h4 className="truncate font-bold text-sm sm:text-base leading-tight">
+            <h4 className="truncate font-bold text-lg sm:text-xl leading-tight">
               {item.name}
             </h4>
-            <p className="truncate text-xs sm:text-sm text-gray-400 font-mono">
+            <p className="truncate text-sm sm:text-base text-gray-400 font-mono">
               {artistNames}
             </p>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="flex items-center justify-center h-10 w-10 bg-[#1DB954] border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
-            {is_playing ? <Pause className="h-5 w-5 text-black" /> : <Play className="h-5 w-5 text-black" />}
+          <div className="flex items-center justify-center h-12 w-12 bg-[#1DB954] border-2 border-black rounded-none shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+            {is_playing ? <Pause className="h-6 w-6 text-black" /> : <Play className="h-6 w-6 text-black" />}
           </div>
           <div className="hidden sm:block">
-             <span className="text-[10px] font-mono text-[#1DB954] uppercase tracking-wider">
+             <span className="text-[12px] font-mono text-[#1DB954] uppercase tracking-wider">
                Now Playing
              </span>
           </div>
