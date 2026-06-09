@@ -21,7 +21,7 @@ function TrackCard({
   const imageUrl = useSpotifyTrackImage(track.name, track.artist)
 
   return (
-    <div style={{ border: "2px solid #111", background: "#f2ede4", padding: 16 }}>
+    <div style={{ background: "#f2ede4", padding: 16 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         <span
           style={{
