@@ -1,55 +1,108 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Music, Filter, ChevronDown, ChevronUp, Calendar, User, Clock, ChevronLeft, ChevronRight } from "lucide-react"
-import PageLayout from "@/components/PageLayout"
-import { CsvImporter, analyzeData } from "@/components/CsvImporter"
-import { Input } from "@/components/ui/input"
-
+import { ChevronLeft, ChevronRight, Filter, ChevronDown, ChevronUp, Calendar, User, Music, Clock } from "lucide-react"
+import AppLayout from "@/components/AppLayout"
+import { CsvImporter } from "@/components/CsvImporter"
 import { useData } from "@/lib/DataContext"
-import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useSpotifyTrackImage } from "@/lib/hooks/useSpotifyTrackImage"
-
-// Define SpotifyStreamingData and Filters interfaces from DataContext
 import { SpotifyStreamingData, ParsedStats, Filters } from "@/lib/DataContext"
 
-function TrackCard({ track, index, currentPage, itemsPerPage }: {
-  track: { name: string; artist: string; plays: number };
-  index: number;
-  currentPage: number;
-  itemsPerPage: number;
+// ─── Track Card ───────────────────────────────────────────────────────────────
+
+function TrackCard({
+  track,
+  rank,
+}: {
+  track: { name: string; artist: string; plays: number }
+  rank: number
 }) {
   const imageUrl = useSpotifyTrackImage(track.name, track.artist)
 
   return (
-    <Card key={index} className="border-white/10 bg-white/5 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1DB954]/20 text-lg font-bold text-[#1DB954]">
-          {(currentPage - 1) * itemsPerPage + index + 1}
+    <div style={{ border: "2px solid #111", background: "#f2ede4", padding: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 22,
+            fontWeight: 900,
+            color: "#d5d0c8",
+            width: 40,
+            flexShrink: 0,
+            lineHeight: 1,
+          }}
+        >
+          {String(rank).padStart(2, "0")}
         </span>
         {imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={imageUrl} alt={`${track.name} album cover`} className="h-12 w-12 rounded-md object-cover" />
+          <img
+            src={imageUrl}
+            alt={track.name}
+            style={{ width: 40, height: 40, objectFit: "cover", flexShrink: 0 }}
+          />
         ) : (
-          <div className="h-12 w-12 rounded-md bg-gray-700 flex items-center justify-center text-gray-400 text-xs">
-            <Music className="h-6 w-6" />
+          <div
+            style={{
+              width: 40,
+              height: 40,
+              background: "#d5d0c8",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Music style={{ width: 16, height: 16, color: "#888" }} />
           </div>
         )}
-        <div className="flex-1">
-          <CardTitle className="text-lg font-medium">{track.name}</CardTitle>
-          <CardDescription className="text-gray-400">
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 13,
+              fontWeight: 700,
+              color: "#111",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {track.name}
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 11,
+              color: "#666",
+              marginTop: 2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
             {track.artist}
-          </CardDescription>
-          <p className="text-sm text-gray-400">{track.plays} écoutes</p>
+          </p>
+          <p
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 11,
+              color: "#888",
+              marginTop: 2,
+            }}
+          >
+            {track.plays} écoutes
+          </p>
         </div>
-      </CardHeader>
-    </Card>
+      </div>
+    </div>
   )
 }
 
-export default function AllMusicPage() {
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
+function AllMusicContent() {
   const { allRawData, importedStats, setImportedData } = useData()
   const [searchTerm, setSearchTerm] = useState("")
   const [showFilters, setShowFilters] = useState(false)
@@ -60,8 +113,6 @@ export default function AllMusicPage() {
     dateTo: "",
     minPlaytime: 0,
   })
-
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(25)
 
@@ -70,299 +121,444 @@ export default function AllMusicPage() {
   }
 
   const resetFilters = () => {
-    setFilters({
-      artistSearch: "",
-      trackSearch: "",
-      dateFrom: "",
-      dateTo: "",
-      minPlaytime: 0,
-    })
-    setCurrentPage(1) // Reset page on filter change
+    setFilters({ artistSearch: "", trackSearch: "", dateFrom: "", dateTo: "", minPlaytime: 0 })
+    setCurrentPage(1)
   }
 
-  // Filter data based on current filters
   const dataAfterFilters = useMemo(() => {
     if (allRawData.length === 0) return []
-
     return allRawData.filter((item) => {
-      if (filters.artistSearch && !item.artistName.toLowerCase().includes(filters.artistSearch.toLowerCase())) {
-        return false
-      }
-      if (filters.trackSearch && !item.trackName.toLowerCase().includes(filters.trackSearch.toLowerCase())) {
-        return false
-      }
-      if (filters.dateFrom && item.endTime) {
-        const itemDate = new Date(item.endTime)
-        const fromDate = new Date(filters.dateFrom)
-        if (itemDate < fromDate) return false
-      }
-      if (filters.dateTo && item.endTime) {
-        const itemDate = new Date(item.endTime)
-        const toDate = new Date(filters.dateTo)
-        if (itemDate > toDate) return false
-      }
-      if (filters.minPlaytime > 0 && item.msPlayed / 60000 < filters.minPlaytime) {
-        return false
-      }
+      if (filters.artistSearch && !item.artistName.toLowerCase().includes(filters.artistSearch.toLowerCase())) return false
+      if (filters.trackSearch && !item.trackName.toLowerCase().includes(filters.trackSearch.toLowerCase())) return false
+      if (filters.dateFrom && item.endTime && new Date(item.endTime) < new Date(filters.dateFrom)) return false
+      if (filters.dateTo && item.endTime && new Date(item.endTime) > new Date(filters.dateTo)) return false
+      if (filters.minPlaytime > 0 && item.msPlayed / 60000 < filters.minPlaytime) return false
       return true
     })
   }, [allRawData, filters])
 
-  // Recalculate stats based on filtered data
-  const filteredStats = useMemo(() => {
-    if (dataAfterFilters.length === 0) {
-      return {
-        totalStreams: 0,
-        totalMinutes: 0,
-        uniqueTracks: 0,
-        uniqueArtists: 0,
-        topTracks: [],
-        topArtists: [],
-        monthlyData: [],
-        hourlyData: [],
-        weekdayData: [],
-        dailyData: [],
-      };
-    }
-    return analyzeData(dataAfterFilters)
-  }, [dataAfterFilters])
-
-
   const allUniqueTracks = useMemo(() => {
     if (!importedStats || dataAfterFilters.length === 0) return []
-    const uniqueTracksPlayCountMap = new Map<string, { name: string; artist: string; plays: number }>()
-    dataAfterFilters.forEach(item => {
+    const map = new Map<string, { name: string; artist: string; plays: number }>()
+    dataAfterFilters.forEach((item) => {
       const key = `${item.trackName}-${item.artistName}`
-      const existing = uniqueTracksPlayCountMap.get(key)
-      if (existing) {
-        existing.plays++
-      } else {
-        uniqueTracksPlayCountMap.set(key, { name: item.trackName, artist: item.artistName, plays: 1 })
-      }
+      const existing = map.get(key)
+      if (existing) existing.plays++
+      else map.set(key, { name: item.trackName, artist: item.artistName, plays: 1 })
     })
-    return Array.from(uniqueTracksPlayCountMap.values()).sort((a, b) => b.plays - a.plays) // Sort by plays descending
+    return Array.from(map.values()).sort((a, b) => b.plays - a.plays)
   }, [importedStats, dataAfterFilters])
 
-  // Apply search term filtering
   const searchedTracks = useMemo(() => {
-    if (!searchTerm) {
-      return allUniqueTracks
-    }
-    const lowerCaseSearchTerm = searchTerm.toLowerCase()
-    return allUniqueTracks.filter(track =>
-      track.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-      track.artist.toLowerCase().includes(lowerCaseSearchTerm)
+    if (!searchTerm) return allUniqueTracks
+    const lc = searchTerm.toLowerCase()
+    return allUniqueTracks.filter(
+      (t) => t.name.toLowerCase().includes(lc) || t.artist.toLowerCase().includes(lc)
     )
   }, [allUniqueTracks, searchTerm])
 
-  // Apply pagination
   const totalPages = Math.ceil(searchedTracks.length / itemsPerPage)
+
   const paginatedTracks = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return searchedTracks.slice(startIndex, endIndex)
+    const start = (currentPage - 1) * itemsPerPage
+    return searchedTracks.slice(start, start + itemsPerPage)
   }, [searchedTracks, currentPage, itemsPerPage])
 
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page)
-    }
-  }
+  const hasActiveFilters =
+    !!filters.artistSearch || !!filters.trackSearch || !!filters.dateFrom || !!filters.dateTo || filters.minPlaytime > 0
 
-  const handleItemsPerPageChange = (value: string) => {
-    setItemsPerPage(Number(value))
-    setCurrentPage(1) // Reset to first page when items per page changes
+  const inputStyle: React.CSSProperties = {
+    fontFamily: "var(--font-mono-brand)",
+    fontSize: 12,
+    background: "transparent",
+    border: "2px solid #111",
+    color: "#111",
+    padding: "8px 12px",
+    outline: "none",
+    width: "100%",
   }
 
   return (
-    <PageLayout>
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="mb-6 text-4xl font-bold">
+    <div style={{ padding: "32px 40px", background: "#f2ede4", minHeight: "100%" }}>
+
+      {/* Page title */}
+      <div style={{ marginBottom: 32 }}>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 48,
+            fontWeight: 900,
+            color: "#111",
+            lineHeight: 1,
+            letterSpacing: "-2px",
+            marginBottom: 8,
+          }}
+        >
           Toutes tes{" "}
-          <span className="bg-gradient-to-r from-[#1DB954] to-[#1ed760] bg-clip-text text-transparent">
-            Musiques
-          </span>
+          <span style={{ color: "#1DB954" }}>Musiques</span>
         </h1>
-        <p className="mb-8 text-gray-400">
-          Importe tes données Spotify pour découvrir l'ensemble de tes titres préférés de tous les temps.
-        </p>
-
-        {!importedStats && (
-          <div className="mb-8">
-            <CsvImporter onDataImported={(stats, rawData) => handleDataImported(stats, rawData)} />
-          </div>
-        )}
-
         {importedStats && (
-          <>
-            {/* Filters */}
-            <Card className="border-white/10 bg-white/5 backdrop-blur-sm mb-6">
-              <CardHeader className="cursor-pointer" onClick={() => setShowFilters(!showFilters)}>
-                <CardTitle className="flex items-center justify-between text-white">
-                  <div className="flex items-center gap-2">
-                    <Filter className="h-5 w-5 text-[#1DB954]" />
-                    Filtres avancés
-                    {(filters.artistSearch || filters.trackSearch || filters.dateFrom || filters.dateTo || filters.minPlaytime > 0) && (
-                      <span className="rounded-full bg-[#1DB954]/20 px-2 py-1 text-xs text-[#1DB954]">Actifs</span>
-                    )}
-                  </div>
-                  {showFilters ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
-                </CardTitle>
-              </CardHeader>
-              {showFilters && (
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-400">
-                        <User className="mr-1 inline h-4 w-4" />
-                        Artiste
-                      </label>
-                      <Input
-                        placeholder="Rechercher un artiste..."
-                        value={filters.artistSearch}
-                        onChange={(e) => setFilters({ ...filters, artistSearch: e.target.value })}
-                        className="border-white/10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-400">
-                        <Music className="mr-1 inline h-4 w-4" />
-                        Titre
-                      </label>
-                      <Input
-                        placeholder="Rechercher un titre..."
-                        value={filters.trackSearch}
-                        onChange={(e) => setFilters({ ...filters, trackSearch: e.target.value })}
-                        className="border-white/10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-400">
-                        <Clock className="mr-1 inline h-4 w-4" />
-                        Durée minimum (min)
-                      </label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={filters.minPlaytime || ""}
-                        onChange={(e) => setFilters({ ...filters, minPlaytime: Number.parseInt(e.target.value) || 0 })}
-                        className="border-white/10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-400">
-                        <Calendar className="mr-1 inline h-4 w-4" />
-                        Date de début
-                      </label>
-                      <Input
-                        type="date"
-                        value={filters.dateFrom}
-                        onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-                        className="border-white/10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-400">
-                        <Calendar className="mr-1 inline h-4 w-4" />
-                        Date de fin
-                      </label>
-                      <Input
-                        type="date"
-                        value={filters.dateTo}
-                        onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-                        className="border-white/10 bg-white/5 text-white"
-                      />
-                    </div>
-                    <div className="flex items-end">
-                      <Button
-                        variant="outline"
-                        onClick={resetFilters}
-                        className="w-full border-white/10 text-white bg-transparent"
-                      >
-                        Réinitialiser
-                      </Button>
-                    </div>
-                  </div>
-                  {(filters.artistSearch || filters.trackSearch || filters.dateFrom || filters.dateTo || filters.minPlaytime > 0) && (
-                    <p className="mt-4 text-sm text-gray-400">
-                      {dataAfterFilters.length} écoutes correspondent aux filtres (sur {allRawData.length} total)
-                    </p>
-                  )}
-                </CardContent>
-              )}
-            </Card>
-
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
-              <Input
-                type="text"
-                placeholder="Rechercher un titre ou un artiste..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }} // Reset page on search
-                className="border-white/10 bg-white/5 text-white md:w-1/3"
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-gray-400">Éléments par page:</span>
-                <Select value={String(itemsPerPage)} onValueChange={handleItemsPerPageChange}>
-                  <SelectTrigger className="w-[100px] border-white/10 bg-white/5 text-white">
-                    <SelectValue placeholder="25" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-white/10 text-white">
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="25">25</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="1000">1000</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {paginatedTracks.length === 0 && (
-              <p className="text-gray-400">Aucun titre ne correspond à votre recherche ou aucune donnée importée.</p>
-            )}
-
-            <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {paginatedTracks.map((track, index) => (
-                <TrackCard
-                  key={track.name + track.artist} // Use a more stable key
-                  track={track}
-                  index={index}
-                  currentPage={currentPage}
-                  itemsPerPage={itemsPerPage}
-                />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="mt-8 flex items-center justify-center gap-4">
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                  className="border-white/10 text-white bg-transparent"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-2" />
-                  Précédent
-                </Button>
-                <span className="text-gray-400">
-                  Page {currentPage} sur {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                  className="border-white/10 text-white bg-transparent"
-                >
-                  Suivant
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                </Button>
-              </div>
-            )}
-          </>
+          <p
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 12,
+              color: "#666",
+            }}
+          >
+            {searchedTracks.length} titre{searchedTracks.length !== 1 ? "s" : ""}
+          </p>
         )}
-
       </div>
-    </PageLayout>
+
+      {!importedStats && (
+        <div style={{ marginBottom: 32 }}>
+          <CsvImporter onDataImported={(stats, rawData) => handleDataImported(stats, rawData)} />
+        </div>
+      )}
+
+      {importedStats && (
+        <>
+          {/* Toolbar */}
+          <div
+            style={{
+              display: "flex",
+              gap: 12,
+              marginBottom: 24,
+              alignItems: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Rechercher un titre ou un artiste…"
+              value={searchTerm}
+              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1) }}
+              style={{ ...inputStyle, width: 280 }}
+            />
+
+            <button
+              onClick={() => setShowFilters((p) => !p)}
+              style={{
+                fontFamily: "var(--font-mono-brand)",
+                fontSize: 11,
+                fontWeight: 700,
+                background: showFilters ? "#111" : "transparent",
+                border: "2px solid #111",
+                color: showFilters ? "#f2ede4" : "#111",
+                padding: "8px 16px",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+              }}
+            >
+              <Filter style={{ width: 12, height: 12 }} />
+              Filtres
+              {hasActiveFilters && (
+                <span
+                  style={{
+                    background: "#1DB954",
+                    color: "#000",
+                    borderRadius: 0,
+                    padding: "1px 6px",
+                    fontSize: 10,
+                    fontWeight: 700,
+                  }}
+                >
+                  Actifs
+                </span>
+              )}
+              {showFilters ? (
+                <ChevronUp style={{ width: 12, height: 12 }} />
+              ) : (
+                <ChevronDown style={{ width: 12, height: 12 }} />
+              )}
+            </button>
+
+            <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 11,
+                  color: "#666",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                Par page
+              </span>
+              <Select
+                value={String(itemsPerPage)}
+                onValueChange={(v) => { setItemsPerPage(Number(v)); setCurrentPage(1) }}
+              >
+                <SelectTrigger
+                  style={{
+                    fontFamily: "var(--font-mono-brand)",
+                    fontSize: 11,
+                    width: 80,
+                    border: "2px solid #111",
+                    borderRadius: 0,
+                    background: "transparent",
+                    color: "#111",
+                  }}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent
+                  style={{
+                    background: "#f2ede4",
+                    border: "2px solid #111",
+                    borderRadius: 0,
+                    fontFamily: "var(--font-mono-brand)",
+                    fontSize: 11,
+                  }}
+                >
+                  {["10", "25", "50", "100"].map((v) => (
+                    <SelectItem key={v} value={v}>{v}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Filter panel */}
+          {showFilters && (
+            <div
+              style={{
+                border: "2px solid #111",
+                borderBottom: "none",
+                padding: "20px 24px",
+                marginBottom: 0,
+                display: "grid",
+                gridTemplateColumns: "repeat(3, 1fr)",
+                gap: 16,
+              }}
+            >
+              {[
+                { label: "Artiste", icon: <User style={{ width: 12, height: 12 }} />, field: "artistSearch" as const },
+                { label: "Titre", icon: <Music style={{ width: 12, height: 12 }} />, field: "trackSearch" as const },
+              ].map(({ label, icon, field }) => (
+                <div key={field}>
+                  <label
+                    style={{
+                      fontFamily: "var(--font-mono-brand)",
+                      fontSize: 10,
+                      color: "#666",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      marginBottom: 6,
+                    }}
+                  >
+                    {icon} {label}
+                  </label>
+                  <input
+                    placeholder={`Filtrer par ${label.toLowerCase()}…`}
+                    value={filters[field]}
+                    onChange={(e) => setFilters({ ...filters, [field]: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+
+              <div>
+                <label
+                  style={{
+                    fontFamily: "var(--font-mono-brand)",
+                    fontSize: 10,
+                    color: "#666",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.1em",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4,
+                    marginBottom: 6,
+                  }}
+                >
+                  <Clock style={{ width: 12, height: 12 }} /> Durée min (min)
+                </label>
+                <input
+                  type="number"
+                  placeholder="0"
+                  value={filters.minPlaytime || ""}
+                  onChange={(e) =>
+                    setFilters({ ...filters, minPlaytime: parseInt(e.target.value) || 0 })
+                  }
+                  style={inputStyle}
+                />
+              </div>
+
+              {[
+                { label: "Date de début", field: "dateFrom" as const },
+                { label: "Date de fin", field: "dateTo" as const },
+              ].map(({ label, field }) => (
+                <div key={field}>
+                  <label
+                    style={{
+                      fontFamily: "var(--font-mono-brand)",
+                      fontSize: 10,
+                      color: "#666",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.1em",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      marginBottom: 6,
+                    }}
+                  >
+                    <Calendar style={{ width: 12, height: 12 }} /> {label}
+                  </label>
+                  <input
+                    type="date"
+                    value={filters[field]}
+                    onChange={(e) => setFilters({ ...filters, [field]: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+              ))}
+
+              <div style={{ display: "flex", alignItems: "flex-end" }}>
+                <button
+                  onClick={resetFilters}
+                  style={{
+                    fontFamily: "var(--font-mono-brand)",
+                    fontSize: 11,
+                    fontWeight: 700,
+                    background: "transparent",
+                    border: "2px solid #111",
+                    color: "#111",
+                    padding: "8px 16px",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    width: "100%",
+                  }}
+                >
+                  Réinitialiser
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(4, 1fr)",
+              gap: 0,
+              border: "2px solid #111",
+            }}
+          >
+            {paginatedTracks.length === 0 ? (
+              <p
+                style={{
+                  gridColumn: "1 / -1",
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 13,
+                  color: "#666",
+                  padding: "32px 24px",
+                }}
+              >
+                Aucun titre trouvé.
+              </p>
+            ) : (
+              paginatedTracks.map((track, index) => (
+                <div
+                  key={track.name + track.artist}
+                  style={{
+                    borderRight: (index + 1) % 4 !== 0 ? "2px solid #111" : "none",
+                    borderBottom: "2px solid #111",
+                  }}
+                >
+                  <TrackCard
+                    track={track}
+                    rank={(currentPage - 1) * itemsPerPage + index + 1}
+                  />
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 16,
+                marginTop: 24,
+              }}
+            >
+              <button
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "transparent",
+                  border: "2px solid #111",
+                  color: currentPage === 1 ? "#bbb" : "#111",
+                  borderColor: currentPage === 1 ? "#bbb" : "#111",
+                  padding: "8px 16px",
+                  cursor: currentPage === 1 ? "default" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                <ChevronLeft style={{ width: 12, height: 12 }} /> Préc.
+              </button>
+              <span
+                style={{
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 12,
+                  color: "#555",
+                }}
+              >
+                {currentPage} / {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 11,
+                  fontWeight: 700,
+                  background: "transparent",
+                  border: "2px solid #111",
+                  color: currentPage === totalPages ? "#bbb" : "#111",
+                  borderColor: currentPage === totalPages ? "#bbb" : "#111",
+                  padding: "8px 16px",
+                  cursor: currentPage === totalPages ? "default" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  textTransform: "uppercase",
+                  letterSpacing: "0.08em",
+                }}
+              >
+                Suiv. <ChevronRight style={{ width: 12, height: 12 }} />
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
+export default function AllMusicPage() {
+  return (
+    <AppLayout>
+      <AllMusicContent />
+    </AppLayout>
   )
 }
