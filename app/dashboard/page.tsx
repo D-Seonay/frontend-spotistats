@@ -1,215 +1,367 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Music, TrendingUp, Clock, Heart, LogOut, User, Upload } from "lucide-react"
-import Link from "next/link"
-import { useRouter } from "next/navigation"
-import { CsvImporter } from "@/components/CsvImporter"
-import SpotifyPlayer from "@/components/SpotifyPlayer"
-import { Calendar } from "lucide-react"
-import { useMemo } from "react"
+import { useState, useMemo, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
+import AppLayout, { useAppFilters } from "@/components/AppLayout"
 import { useData } from "@/lib/DataContext"
-import { ParsedStats, SpotifyStreamingData } from "@/lib/types"
+import { CsvImporter, analyzeData } from "@/components/CsvImporter"
+import { applyAppFilters } from "@/lib/filters"
+import { calculateAdvancedStats } from "@/lib/stats-utils"
 import { ActivityHeatmap } from "@/components/ActivityHeatmap"
-import { StatCardWidget } from "@/components/StatCardWidget"
 import { TopArtistsWidget } from "@/components/TopArtistsWidget"
 import { TopTracksWidget } from "@/components/TopTracksWidget"
-import { ListeningHabitsWidget } from "@/components/widgets/ListeningHabitsWidget"
-import { LoyaltyWidget } from "@/components/widgets/LoyaltyWidget"
-import { TemporalTrendsWidget } from "@/components/widgets/TemporalTrendsWidget"
-import { calculateAdvancedStats } from "@/lib/stats-utils"
+import SpotifyPlayer from "@/components/SpotifyPlayer"
+import { ParsedStats, SpotifyStreamingData } from "@/lib/types"
 
-export default function DashboardPage() {
-  const router = useRouter()
+// ─── Empty State ──────────────────────────────────────────────────────────────
+
+function EmptyState({ onImport }: { onImport: () => void }) {
+  return (
+    <div
+      className="flex h-full flex-col items-center justify-center gap-8 p-12"
+      style={{ background: "#f2ede4" }}
+    >
+      <div className="flex flex-col items-center gap-4 text-center">
+        <span style={{ fontSize: 56 }}>🎧</span>
+        <h2
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: 36,
+            fontWeight: 900,
+            color: "#111",
+            lineHeight: 1,
+            letterSpacing: "-1px",
+          }}
+        >
+          Tes données t'attendent
+        </h2>
+        <p
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 13,
+            color: "#555",
+            maxWidth: 420,
+          }}
+        >
+          Importe tes fichiers d'historique Spotify pour voir tes stats d'écoute.
+        </p>
+      </div>
+
+      {/* Steps */}
+      <div className="flex gap-4">
+        {[
+          { num: "01", text: "Demander l'export sur Spotify" },
+          { num: "02", text: "Attendre l'email (quelques jours)" },
+          { num: "03", text: "Importer le fichier ici" },
+        ].map((step) => (
+          <div
+            key={step.num}
+            className="flex flex-col gap-2 p-4"
+            style={{ border: "2px solid #111", width: 160 }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-display)",
+                fontSize: 28,
+                fontWeight: 900,
+                color: "#d5d0c8",
+                lineHeight: 1,
+              }}
+            >
+              {step.num}
+            </span>
+            <p
+              style={{
+                fontFamily: "var(--font-mono-brand)",
+                fontSize: 11,
+                color: "#555",
+                lineHeight: 1.4,
+              }}
+            >
+              {step.text}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={onImport}
+        style={{
+          fontFamily: "var(--font-mono-brand)",
+          fontSize: 13,
+          fontWeight: 700,
+          background: "#1DB954",
+          color: "#000",
+          border: "none",
+          padding: "14px 32px",
+          cursor: "pointer",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+        }}
+      >
+        Importer mes données Spotify
+      </button>
+    </div>
+  )
+}
+
+// ─── Stat Block ───────────────────────────────────────────────────────────────
+
+function StatBlock({
+  eyebrow,
+  value,
+  accent,
+}: {
+  eyebrow: string
+  value: string
+  accent?: boolean
+}) {
+  return (
+    <div
+      className="flex flex-col justify-center p-5"
+      style={{ borderLeft: "2px solid #111" }}
+    >
+      <p
+        style={{
+          fontFamily: "var(--font-mono-brand)",
+          fontSize: 10,
+          color: "#666",
+          textTransform: "uppercase",
+          letterSpacing: "0.12em",
+          marginBottom: 8,
+        }}
+      >
+        {eyebrow}
+      </p>
+      <p
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 40,
+          fontWeight: 900,
+          color: accent ? "#1DB954" : "#111",
+          lineHeight: 1,
+          letterSpacing: "-1px",
+        }}
+      >
+        {value}
+      </p>
+    </div>
+  )
+}
+
+// ─── Dashboard Content ────────────────────────────────────────────────────────
+
+function DashboardContent() {
+  const { allRawData, importedStats, setImportedData } = useData()
+  const { filters } = useAppFilters()
+  const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
-  const [deviceId, setDeviceId] = useState<string | null>(null)
-  const { importedStats, setImportedData, allRawData } = useData()
 
-  const advancedStats = useMemo(() => importedStats ? calculateAdvancedStats(allRawData) : null, [importedStats, allRawData]);
+  useEffect(() => {
+    if (searchParams.get("tab") === "import") setActiveTab("import")
+  }, [searchParams])
+
+  const filteredRawData = useMemo(
+    () => applyAppFilters(allRawData, filters),
+    [allRawData, filters],
+  )
+
+  const displayStats = useMemo(() => {
+    if (!importedStats) return null
+    if (filteredRawData.length === 0) return null
+    return analyzeData(filteredRawData)
+  }, [importedStats, filteredRawData])
+
+  const advancedStats = useMemo(() => {
+    if (!importedStats) return null
+    if (filteredRawData.length === 0) return null
+    return calculateAdvancedStats(filteredRawData)
+  }, [importedStats, filteredRawData])
+
+  const filterLabel = useMemo(() => {
+    if (filters.dateFrom || filters.dateTo) {
+      return `${filters.dateFrom || "…"} → ${filters.dateTo || "…"}`
+    }
+    if (filters.artistName) return filters.artistName
+    if (filters.trackName) return filters.trackName
+    return filters.year ?? "Tout"
+  }, [filters])
 
   const handleDataImported = (stats: ParsedStats, rawData: SpotifyStreamingData[]) => {
     setImportedData(stats, rawData)
-    setActiveTab("overview") // Switch to overview after import
+    setActiveTab("overview")
   }
 
-  const handleLogout = () => {
-    router.push("/")
+  if (activeTab === "import") {
+    return (
+      <div className="p-6" style={{ background: "#f2ede4" }}>
+        <CsvImporter onDataImported={handleDataImported} />
+      </div>
+    )
   }
 
-  const displayStats = importedStats
-
-  const stats = {
-    totalListeningTime: displayStats ? Math.round(displayStats.totalMinutes / 60).toLocaleString() : "0",
-    topGenre: "N/A", // Genre not directly available in current ParsedStats
-    totalTracks: displayStats ? displayStats.uniqueTracks.toLocaleString() : "0",
-    totalArtists: displayStats ? displayStats.uniqueArtists.toLocaleString() : "0",
+  if (!importedStats) {
+    return <EmptyState onImport={() => setActiveTab("import")} />
   }
+
+  if (!displayStats) {
+    return (
+      <div className="flex h-full items-center justify-center p-8">
+        <p
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 13,
+            color: "#555",
+          }}
+        >
+          Aucune donnée ne correspond aux filtres actifs.
+        </p>
+      </div>
+    )
+  }
+
+  const hours = Math.round(displayStats.totalMinutes / 60)
 
   return (
-    <div className="min-h-screen bg-black text-white">
-      {/* Header */}
-      <header className="border-b border-white/10 bg-black/80 backdrop-blur-xl">
-        <nav className="container mx-auto flex items-center justify-between px-4 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#1DB954]">
-              <span className="font-mono text-lg font-bold text-black">SLS</span>
+    <div style={{ background: "#f2ede4" }}>
+
+      {/* ── Hero section ── */}
+      <div style={{ border: "2px solid #111" }}>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "auto 1fr 1fr 1fr",
+          }}
+        >
+          {/* Big time block */}
+          <div
+            style={{
+              borderRight: "2px solid #111",
+              padding: "24px 32px",
+              minWidth: 240,
+            }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono-brand)",
+                fontSize: 10,
+                color: "#666",
+                textTransform: "uppercase",
+                letterSpacing: "0.12em",
+                marginBottom: 8,
+              }}
+            >
+              Temps d'écoute · {filterLabel}
+            </p>
+            <div style={{ lineHeight: 1 }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 80,
+                  fontWeight: 900,
+                  color: "#111",
+                  letterSpacing: "-3px",
+                }}
+              >
+                {hours.toLocaleString()}
+              </span>
+              <span
+                style={{
+                  fontFamily: "var(--font-display)",
+                  fontSize: 40,
+                  fontWeight: 900,
+                  color: "#1DB954",
+                  letterSpacing: "0",
+                }}
+              >
+                h
+              </span>
             </div>
-            <span className="hidden font-bold sm:inline">Spotify Listener Stats</span>
-          </Link>
-
-          <div className="flex items-center gap-4">
-            <Link href="/profile">
-              <Button variant="ghost" size="sm" className="text-gray-300 hover:text-[#1DB954]">
-                <User className="mr-2 h-4 w-4" />
-                Profil
-              </Button>
-            </Link>
-            <Button variant="ghost" size="sm" onClick={handleLogout} className="text-gray-300 hover:text-[#1DB954]">
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
-            </Button>
           </div>
-        </nav>
-      </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="mb-2 text-4xl font-bold">
-            Bienvenue sur ton{" "}
-            <span className="bg-gradient-to-r from-[#1DB954] to-[#1ed760] bg-clip-text text-transparent">
-              Dashboard
-            </span>
-          </h1>
-          <p className="text-gray-400">Découvre tes statistiques d'écoute Spotify</p>
+          <StatBlock eyebrow="Titres uniques" value={displayStats.uniqueTracks.toLocaleString()} />
+          <StatBlock eyebrow="Artistes" value={displayStats.uniqueArtists.toLocaleString()} />
+          <StatBlock
+            eyebrow="Pic d'écoute"
+            value={advancedStats ? `${advancedStats.peakListeningHour}h` : "—"}
+            accent
+          />
         </div>
+      </div>
 
-        {/* Tab Navigation */}
-        <div className="mb-6 flex gap-2 overflow-x-auto border-b border-white/10">
-          <Link
-            href="/all-music"
-            className="whitespace-nowrap px-4 py-2 transition-colors text-gray-400 hover:text-white"
+      {/* ── Heatmap + Player ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 160px",
+          border: "2px solid #111",
+          borderTop: "none",
+        }}
+      >
+        <div
+          style={{
+            background: "#fff",
+            borderRight: "2px solid #111",
+            padding: "20px 24px",
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 10,
+              color: "#666",
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              marginBottom: 12,
+            }}
           >
-            Tous les Titres
-          </Link>
-          <Link
-            href="/all-artists"
-            className="whitespace-nowrap px-4 py-2 transition-colors text-gray-400 hover:text-white"
-          >
-            Tous les Artistes
-          </Link>
-          <button
-            onClick={() => setActiveTab("import")}
-            className={`flex items-center gap-2 whitespace-nowrap px-4 py-2 transition-colors ${
-              activeTab === "import" ? "border-b-2 border-[#1DB954] text-[#1DB954]" : "text-gray-400 hover:text-white"
-            }`}
-          >
-            <Upload className="h-4 w-4" />
-            Importer CSV
-          </button>
+            <span style={{ color: "#1DB954", fontWeight: 700 }}>// </span>
+            Activité · {filterLabel}
+          </p>
+          <ActivityHeatmap data={displayStats.dailyData} />
         </div>
+        <div
+          style={{
+            background: "#111",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            gap: 12,
+          }}
+        >
+          <SpotifyPlayer />
+        </div>
+      </div>
 
-        {/* Content based on active tab */}
-        {activeTab === "import" ? (
-          <CsvImporter onDataImported={handleDataImported} />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-9 lg:gap-6">
-            {!importedStats ? (
-              <div className="col-span-full">
-                <p>Importez vos données Spotify (fichiers CSV/JSON) pour voir vos statistiques.</p>
-              </div>
-            ) : (
-              <>
-                {/* Stat Flash Cards (1x1 each) */}
-                <div className="md:col-span-1 md:row-span-1">
-                  <StatCardWidget
-                    title="Temps d'écoute (h)"
-                    icon={<Clock className="h-4 w-4" />}
-                    value={stats.totalListeningTime}
-                  />
-                </div>
+      {/* ── Top Lists ── */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          border: "2px solid #111",
+          borderTop: "none",
+        }}
+      >
+        <div style={{ borderRight: "2px solid #111" }}>
+          <TopArtistsWidget topArtists={displayStats.topArtists} />
+        </div>
+        <TopTracksWidget topTracks={displayStats.topTracks} />
+      </div>
 
-                <div className="md:col-span-1 md:row-span-1">
-                  <StatCardWidget
-                    title="Genre préféré"
-                    icon={<Heart className="h-4 w-4" />}
-                    value={stats.topGenre}
-                  />
-                </div>
-
-                <div className="md:col-span-1 md:row-span-1">
-                  <StatCardWidget
-                    title="Total Titres"
-                    icon={<Music className="h-4 w-4" />}
-                    value={stats.totalTracks}
-                  />
-                </div>
-
-                <div className="md:col-span-1 md:row-span-1">
-                  <StatCardWidget
-                    title="Total Artistes"
-                    icon={<TrendingUp className="h-4 w-4" />}
-                    value={stats.totalArtists}
-                  />
-                </div>
-
-                {/* New Widgets */}
-                {advancedStats && (
-                  <>
-                    <div className="md:col-span-2 md:row-span-1">
-                      <ListeningHabitsWidget stats={advancedStats} />
-                    </div>
-                    <div className="md:col-span-1 md:row-span-1">
-                      <LoyaltyWidget stats={advancedStats} />
-                    </div>
-                    <div className="md:col-span-1 md:row-span-1">
-                      <TemporalTrendsWidget dailyData={displayStats.dailyData} />
-                    </div>
-                  </>
-                )}
-
-                {/* Heatmap (3x2) */}
-                <div className="md:col-span-3 md:row-span-2">
-                  <Card className="h-full border-white/10 bg-white/5 backdrop-blur-sm">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-white">
-                        <Calendar className="h-5 w-5 text-[#1DB954]" />
-                        Activité d'écoute (12 derniers mois)
-                      </CardTitle>
-                      <CardDescription className="text-gray-400">
-                        Visualisation de votre activité quotidienne style GitHub
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <ActivityHeatmap data={displayStats.dailyData} />
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Spotify Player (1x2) */}
-                <div className="md:col-span-1 md:row-span-2">
-                  <div className="h-full rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm overflow-hidden flex flex-col items-center justify-center p-4">
-                    <SpotifyPlayer onReady={setDeviceId} />
-                  </div>
-                </div>
-
-                {/* Top Artists (2x3) */}
-                <div className="md:col-span-2 md:row-span-3">
-                  <TopArtistsWidget topArtists={displayStats.topArtists} />
-                </div>
-
-                {/* Top Tracks (2x3) */}
-                <div className="md:col-span-2 md:row-span-3">
-                  <TopTracksWidget topTracks={displayStats.topTracks} />
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </main>
     </div>
+  )
+}
+
+// ─── Page Export ──────────────────────────────────────────────────────────────
+
+export default function DashboardPage() {
+  return (
+    <AppLayout>
+      <Suspense fallback={<div style={{ background: "#f2ede4", height: "100%" }} />}>
+        <DashboardContent />
+      </Suspense>
+    </AppLayout>
   )
 }

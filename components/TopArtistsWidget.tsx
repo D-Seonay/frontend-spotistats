@@ -1,7 +1,5 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { TrendingUp, User } from "lucide-react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { User } from "lucide-react"
 import { ParsedStats } from "@/lib/types"
 import { useSpotifyArtistImage } from "@/lib/hooks/useSpotifyArtistImage"
 
@@ -9,59 +7,144 @@ interface TopArtistsWidgetProps {
   topArtists: ParsedStats["topArtists"]
 }
 
-function ArtistItem({ artist, index }: { artist: { name: string, plays: number }, index: number }) {
+function ArtistRow({
+  artist,
+  index,
+  maxPlays,
+}: {
+  artist: { name: string; plays: number }
+  index: number
+  maxPlays: number
+}) {
   const imageUrl = useSpotifyArtistImage(artist.name)
+  const barWidth = Math.round((artist.plays / maxPlays) * 100)
 
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#1DB954]/20 text-sm font-bold text-[#1DB954]">
-          {index + 1}
-        </span>
-        {imageUrl ? (
-          <img src={imageUrl} alt={artist.name} className="h-10 w-10 shrink-0 rounded-full object-cover" />
-        ) : (
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10">
-            <User className="h-5 w-5 text-gray-400" />
-          </div>
-        )}
-        <p className="font-medium line-clamp-1">{artist.name}</p>
-      </div>
-      <span className="text-sm text-gray-400 shrink-0">
-        {artist.plays} écoutes
+    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <span
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: 22,
+          fontWeight: 900,
+          color: index === 0 ? "#1DB954" : "#d5d0c8",
+          width: 36,
+          flexShrink: 0,
+          lineHeight: 1,
+        }}
+      >
+        {String(index + 1).padStart(2, "0")}
       </span>
+
+      {imageUrl ? (
+        <img
+          src={imageUrl}
+          alt={artist.name}
+          style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
+        />
+      ) : (
+        <div
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: "50%",
+            background: "#d5d0c8",
+            flexShrink: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <User style={{ width: 16, height: 16, color: "#888" }} />
+        </div>
+      )}
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 12,
+            fontWeight: 700,
+            color: "#111",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            marginBottom: 5,
+          }}
+        >
+          {artist.name}
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ flex: 1, height: 2, background: "#d5d0c8" }}>
+            <div style={{ width: `${barWidth}%`, height: "100%", background: "#111" }} />
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--font-mono-brand)",
+              fontSize: 10,
+              color: "#666",
+              flexShrink: 0,
+            }}
+          >
+            {artist.plays}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
 
 export function TopArtistsWidget({ topArtists }: TopArtistsWidgetProps) {
+  const maxPlays = topArtists.length > 0 ? topArtists[0].plays : 1
+
   return (
-    <Card className="h-full border-white/10 bg-white/5 backdrop-blur-sm">
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-[#1DB954]" />
-            Top 5 Artistes
-          </CardTitle>
-          <CardDescription className="text-gray-400">Tes artistes préférés</CardDescription>
-        </div>
-        <Link href="/all-artists">
-          <Button variant="ghost" size="sm" className="text-gray-300 hover:text-[#1DB954]">
-            Voir tout
-          </Button>
+    <div style={{ padding: "20px 24px" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: 16,
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 10,
+            color: "#666",
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
+          }}
+        >
+          Top 5 Artistes
+        </p>
+        <Link
+          href="/all-artists"
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 10,
+            color: "#1DB954",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            textDecoration: "none",
+          }}
+        >
+          Voir tout →
         </Link>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {topArtists.length > 0 ? (
-            topArtists.slice(0, 5).map((artist, index) => (
-              <ArtistItem key={artist.name + index} artist={artist} index={index} />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+        {topArtists.length > 0 ? (
+          topArtists
+            .slice(0, 5)
+            .map((artist, index) => (
+              <ArtistRow key={artist.name + index} artist={artist} index={index} maxPlays={maxPlays} />
             ))
-          ) : (
-            <p className="text-gray-400">Aucun artiste trouvé.</p>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+        ) : (
+          <p style={{ fontFamily: "var(--font-mono-brand)", fontSize: 12, color: "#666" }}>
+            Aucun artiste trouvé.
+          </p>
+        )}
+      </div>
+    </div>
   )
 }

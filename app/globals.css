@@ -4,8 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
+  --background: #f2ede4;
+  --foreground: #111;
   --card: oklch(0.18 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.18 0 0);
@@ -37,6 +37,17 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.25 0 0);
   --sidebar-ring: oklch(0.65 0.19 145);
+  --brand-bg: #f2ede4;
+  --brand-black: #111;
+  --brand-white: #ffffff;
+  --brand-accent: #1DB954;
+  --brand-text-primary: #111;
+  --brand-text-secondary: #555;
+  --brand-text-muted: #666;
+  --brand-text-secondary-dark: #aaa;
+  --brand-text-muted-dark: #888;
+  --brand-border: #111;
+  --brand-border-light: #d5d0c8;
 }
 
 .dark {

@@ -1,6 +1,10 @@
 import { useMemo } from "react"
 
-export function ActivityHeatmap({ data }: { data: { date: string; minutes: number; streams: number }[] }) {
+export function ActivityHeatmap({
+  data,
+}: {
+  data: { date: string; minutes: number; streams: number }[]
+}) {
   const weeks = useMemo(() => {
     if (!data || data.length === 0) return []
 
@@ -48,49 +52,98 @@ export function ActivityHeatmap({ data }: { data: { date: string; minutes: numbe
     return Math.max(...data.map((d) => d.minutes), 1)
   }, [data])
 
-  const getIntensity = (minutes: number) => {
-    if (minutes === 0) return "bg-white/5"
+  const getColor = (minutes: number): string => {
+    if (minutes === 0) return "#ece8e0"
     const ratio = minutes / maxMinutes
-    if (ratio < 0.25) return "bg-[#1DB954]/30"
-    if (ratio < 0.5) return "bg-[#1DB954]/50"
-    if (ratio < 0.75) return "bg-[#1DB954]/70"
-    return "bg-[#1DB954]"
+    if (ratio < 0.25) return "#a8dfbf"
+    if (ratio < 0.5) return "#6dca96"
+    if (ratio < 0.75) return "#3db56d"
+    return "#1DB954"
   }
 
-  const dayLabels = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"]
+  const dayLabels = ["D", "L", "M", "M", "J", "V", "S"]
 
   if (weeks.length === 0) {
     return (
-      <div className="flex h-32 items-center justify-center text-gray-500">
-        Aucune donnée disponible pour la heatmap
+      <div
+        className="flex h-24 items-center justify-center"
+        style={{ fontFamily: "var(--font-mono-brand)", fontSize: 12, color: "#888" }}
+      >
+        Aucune donnée disponible
       </div>
     )
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex gap-1 overflow-x-auto pb-2">
-        <div className="flex flex-col gap-1 pr-2 text-xs text-gray-500">
-          {dayLabels.map((day, i) => (
-            <div key={i} className="h-3 leading-3">
-              {i % 2 === 1 ? day : ""}
-            </div>
-          ))}
-        </div>
-        <div className="flex gap-1">
+      <div style={{ overflowX: "auto", paddingBottom: 8 }}>
+        <div style={{ display: "flex", gap: 4, width: "max-content" }}>
+          {/* Day labels column */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 3, paddingRight: 6 }}>
+            {dayLabels.map((label, i) => (
+              <div
+                key={i}
+                style={{
+                  width: 13,
+                  height: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                  fontFamily: "var(--font-mono-brand)",
+                  fontSize: 9,
+                  color: "#888",
+                  lineHeight: 1,
+                }}
+              >
+                {i % 2 === 1 ? label : ""}
+              </div>
+            ))}
+          </div>
+
+          {/* Week columns */}
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-1">
+            <div key={weekIndex} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
               {week.map((day, dayIndex) => (
                 <div
                   key={dayIndex}
-                  className={`group relative h-3 w-3 rounded-sm transition-all hover:ring-1 hover:ring-white/50 ${
-                    day.date ? getIntensity(day.minutes) : "bg-transparent"
-                  }`}
+                  className="group relative"
+                  style={{
+                    width: 13,
+                    height: 13,
+                    flexShrink: 0,
+                    background: day.date ? getColor(day.minutes) : "transparent",
+                    cursor: day.date && day.minutes > 0 ? "pointer" : "default",
+                  }}
                 >
                   {day.date && day.minutes > 0 && (
-                    <div className="pointer-events-none absolute -top-12 left-1/2 z-50 hidden -translate-x-1/2 whitespace-nowrap rounded bg-black/90 px-2 py-1 text-xs group-hover:block">
-                      <p className="font-medium">{day.date}</p>
-                      <p className="text-gray-400">
+                    <div
+                      className="pointer-events-none absolute z-50 hidden group-hover:block"
+                      style={{
+                        bottom: "calc(100% + 4px)",
+                        left: "50%",
+                        transform: "translateX(-50%)",
+                        background: "#111",
+                        padding: "6px 10px",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: "var(--font-mono-brand)",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "#f2ede4",
+                        }}
+                      >
+                        {day.date}
+                      </p>
+                      <p
+                        style={{
+                          fontFamily: "var(--font-mono-brand)",
+                          fontSize: 10,
+                          color: "#aaa",
+                        }}
+                      >
                         {day.minutes} min · {day.streams} écoutes
                       </p>
                     </div>
@@ -101,16 +154,30 @@ export function ActivityHeatmap({ data }: { data: { date: string; minutes: numbe
           ))}
         </div>
       </div>
-      <div className="flex items-center justify-end gap-2 text-xs text-gray-500">
-        <span>Moins</span>
-        <div className="flex gap-1">
-          <div className="h-3 w-3 rounded-sm bg-white/5" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/30" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/50" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]/70" />
-          <div className="h-3 w-3 rounded-sm bg-[#1DB954]" />
-        </div>
-        <span>Plus</span>
+
+      {/* Legend */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+        <span
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 10,
+            color: "#666",
+          }}
+        >
+          Moins
+        </span>
+        {["#ece8e0", "#a8dfbf", "#6dca96", "#3db56d", "#1DB954"].map((color) => (
+          <div key={color} style={{ width: 13, height: 13, background: color, flexShrink: 0 }} />
+        ))}
+        <span
+          style={{
+            fontFamily: "var(--font-mono-brand)",
+            fontSize: 10,
+            color: "#666",
+          }}
+        >
+          Plus
+        </span>
       </div>
     </div>
   )
