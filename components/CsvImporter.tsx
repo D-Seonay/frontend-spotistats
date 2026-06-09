@@ -308,22 +308,22 @@ export function CsvImporter({ onDataImported }: { onDataImported?: (stats: Parse
   }
 
   return (
-    <Card className="border-white/10 bg-white/5 backdrop-blur-sm">
+    <Card className="border-4 border-black bg-white shadow-[8px_8px_0_0_#000] rounded-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-white">
+        <CardTitle className="flex items-center gap-2 text-black font-black uppercase tracking-tight">
           <Upload className="h-5 w-5 text-[#1DB954]" />
           Importer vos données Spotify
         </CardTitle>
-        <CardDescription className="text-gray-400">
+        <CardDescription className="text-gray-700 font-bold font-mono">
           Glissez-déposez ou sélectionnez plusieurs fichiers JSON/CSV de votre historique Spotify
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div
-          className={`cursor-pointer rounded-xl border-2 border-dashed p-8 text-center transition-all ${
+          className={`cursor-pointer rounded-none border-2 border-dashed p-8 text-center transition-all ${
             isDragging
               ? "border-[#1DB954] bg-[#1DB954]/10"
-              : "border-white/20 hover:border-[#1DB954]/50 hover:bg-white/5"
+              : "border-black hover:border-[#1DB954] hover:bg-[#1DB954]/10 bg-[#f2ede4] text-black"
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -340,20 +340,20 @@ export function CsvImporter({ onDataImported }: { onDataImported?: (stats: Parse
             className="hidden"
           />
           <div className="flex flex-col items-center gap-4">
-            <div className="rounded-full bg-[#1DB954]/20 p-4">
+            <div className="rounded-full bg-[#1DB954]/20 p-4 border-2 border-black">
               <Files className="h-8 w-8 text-[#1DB954]" />
             </div>
             <div>
-              <p className="text-lg font-medium text-white">
+              <p className="text-lg font-bold text-black">
                 {isDragging ? "Déposez vos fichiers ici" : "Glissez vos fichiers ou cliquez pour sélectionner"}
               </p>
-              <p className="mt-1 text-sm text-gray-400">Sélection multiple supportée · Formats acceptés: JSON, CSV</p>
+              <p className="mt-1 text-sm text-gray-700">Sélection multiple supportée · Formats acceptés: JSON, CSV</p>
             </div>
           </div>
         </div>
 
         {error && (
-          <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-500/10 p-4 text-red-400">
+          <div className="mt-4 flex items-center gap-2 rounded-none bg-red-100 border-2 border-black p-4 text-red-700 font-bold">
             <AlertCircle className="h-5 w-5 flex-shrink-0" />
             <p>{error}</p>
           </div>
@@ -362,31 +362,31 @@ export function CsvImporter({ onDataImported }: { onDataImported?: (stats: Parse
         {files.length > 0 && (
           <div className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="font-semibold text-white">Fichiers sélectionnés ({files.length})</h4>
+              <h4 className="font-semibold text-black">Fichiers sélectionnés ({files.length})</h4>
             </div>
 
             <div className="max-h-48 space-y-2 overflow-y-auto">
               {files.map((fileInfo, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between rounded-lg border border-white/10 bg-white/5 p-3"
+                  className="flex items-center justify-between rounded-none border-2 border-black bg-[#f2ede4] p-3"
                 >
                   <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-[#1DB954]" />
                     <div>
-                      <p className="text-sm font-medium text-white">{fileInfo.name}</p>
-                      <p className="text-xs text-gray-400">
+                      <p className="text-sm font-bold text-black">{fileInfo.name}</p>
+                      <p className="text-xs text-gray-700">
                         {(fileInfo.size / 1024).toFixed(1)} KB
                         {fileInfo.recordCount && ` · ${fileInfo.recordCount} entrées`}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded-full px-2 py-1 text-xs`}>
+                    <span className={`rounded-full border-2 border-black bg-white px-2 py-1 text-xs font-bold`}>
                       {fileInfo.status}
                     </span>
                     {fileInfo.status === "pending" && (
-                      <button onClick={() => removeFile(index)} className="text-gray-400 hover:text-red-400">
+                      <button onClick={() => removeFile(index)} className="text-gray-700 hover:text-red-600">
                         <X className="h-4 w-4" />
                       </button>
                     )}
@@ -399,7 +399,7 @@ export function CsvImporter({ onDataImported }: { onDataImported?: (stats: Parse
               <Button
                 onClick={processAllFiles}
                 disabled={isProcessing}
-                className="w-full bg-[#1DB954] text-black hover:bg-[#1ed760]"
+                className="w-full bg-[#1DB954] text-black hover:bg-[#1ed760] rounded-none border-2 border-black shadow-[4px_4px_0_0_#000] font-black uppercase tracking-tight"
               >
                 {isProcessing ? (
                   <>
