@@ -57,7 +57,7 @@ export function RecentlyPlayedList() {
         <p
           style={{
             fontFamily: "var(--font-mono-brand)",
-            fontSize: 10,
+            fontSize: 12,
             color: "#111",
             textTransform: "uppercase",
             letterSpacing: "0.12em",
@@ -83,7 +83,7 @@ export function RecentlyPlayedList() {
             <p
               style={{
                 fontFamily: "var(--font-display)",
-                fontSize: 14,
+                fontSize: 16,
                 fontWeight: 700,
                 color: "#111",
                 lineHeight: 1.2,
@@ -98,7 +98,8 @@ export function RecentlyPlayedList() {
               <p
                 style={{
                   fontFamily: "var(--font-mono-brand)",
-                  fontSize: 11,
+                  fontSize: 13,
+                  fontWeight: 600,
                   color: "#666",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -110,7 +111,7 @@ export function RecentlyPlayedList() {
               <p
                 style={{
                   fontFamily: "var(--font-mono-brand)",
-                  fontSize: 9,
+                  fontSize: 11,
                   color: "#999",
                 }}
               >
