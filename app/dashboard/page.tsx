@@ -156,7 +156,6 @@ function DashboardContent() {
   const { filters } = useAppFilters()
   const searchParams = useSearchParams()
   const [activeTab, setActiveTab] = useState<"overview" | "import">("overview")
-  const [deviceId, setDeviceId] = useState<string | null>(null)
 
   useEffect(() => {
     if (searchParams.get("tab") === "import") setActiveTab("import")
@@ -174,9 +173,10 @@ function DashboardContent() {
   }, [importedStats, filteredRawData])
 
   const advancedStats = useMemo(() => {
+    if (!importedStats) return null
     if (filteredRawData.length === 0) return null
     return calculateAdvancedStats(filteredRawData)
-  }, [filteredRawData])
+  }, [importedStats, filteredRawData])
 
   const filterLabel = useMemo(() => {
     if (filters.dateFrom || filters.dateTo) {
@@ -271,7 +271,7 @@ function DashboardContent() {
                   fontSize: 40,
                   fontWeight: 900,
                   color: "#1DB954",
-                  letterSpacing: 0,
+                  letterSpacing: "0",
                 }}
               >
                 h
@@ -331,7 +331,7 @@ function DashboardContent() {
             gap: 12,
           }}
         >
-          <SpotifyPlayer onReady={setDeviceId} />
+          <SpotifyPlayer />
         </div>
       </div>
 
