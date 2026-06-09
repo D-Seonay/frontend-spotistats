@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, ReactNode } from "react"
+import { createContext, useContext, useState, ReactNode, useRef, useEffect } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, Users, Music, Upload, LogOut } from "lucide-react"
@@ -70,6 +70,18 @@ function TopBar({
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [showArtistInput, setShowArtistInput] = useState(false)
   const [showTrackInput, setShowTrackInput] = useState(false)
+  const datePickerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showDatePicker) return
+    function handleOutsideClick(e: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target as Node)) {
+        setShowDatePicker(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutsideClick)
+    return () => document.removeEventListener("mousedown", handleOutsideClick)
+  }, [showDatePicker])
 
   const pageLabel =
     pathname === "/dashboard"
@@ -230,6 +242,7 @@ function TopBar({
           {/* Date picker dropdown */}
           {showDatePicker && (
             <div
+              ref={datePickerRef}
               className="absolute left-0 top-full z-50 flex items-end gap-3 p-3"
               style={{
                 background: "#1a1a1a",
